@@ -185,7 +185,7 @@
                     &copy; {{ date('Y') }} Xenon Motors. All rights reserved.
                 </p>
                 <p class="text-slate-500 text-sm mt-2 md:mt-0">
-                    Made with ❤️ in UAE
+                    Made with MA DIGITAL in UAE
                 </p>
             </div>
         </div>

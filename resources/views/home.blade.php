@@ -77,7 +77,7 @@
                 </h1>
                 
                 <!-- Search Form Container -->
-                <div class="bg-white rounded-lg shadow-2xl border-2 border-blue-500">
+                <div class="bg-white rounded-lg shadow-2xl ">
                     <!-- Top Row: Filter Dropdowns (Make | Year | Condition) -->
                     <div class="flex flex-col md:flex-row bg-slate-50">
                         <!-- Make Dropdown -->
@@ -206,7 +206,7 @@
 
         <!-- Slider Navigation Dots - moved above search -->
         @if($banners->count() > 1)
-        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
+        <div class="absolute bottom-8 mb-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
             @foreach($banners as $index => $banner)
                 <button @click="goToSlide({{ $index }})" 
                     class="w-3 h-3 rounded-full transition-all duration-300"
