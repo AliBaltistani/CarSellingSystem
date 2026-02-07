@@ -131,6 +131,34 @@ class Car extends Model
         return $this->hasMany(CarView::class);
     }
 
+    // Dynamic Attribute Engine relationship
+    public function attributeValues(): HasMany
+    {
+        return $this->hasMany(CarAttributeValue::class);
+    }
+
+    // Get attribute value by attribute ID (renamed to avoid conflict with base Model)
+    public function getDynamicAttributeValue(int $attributeId)
+    {
+        $value = $this->attributeValues->firstWhere('attribute_id', $attributeId);
+        return $value ? $value->typed_value : null;
+    }
+
+    // Get all custom attributes formatted for display
+    public function getFormattedAttributes(): array
+    {
+        $formatted = [];
+        foreach ($this->attributeValues()->with('attribute.group')->get() as $value) {
+            $formatted[] = [
+                'name' => $value->attribute->name,
+                'value' => $value->formatted_value,
+                'group' => $value->attribute->group?->name ?? 'General',
+                'icon' => $value->attribute->icon,
+            ];
+        }
+        return $formatted;
+    }
+
     // Accessors
     public function getFormattedPriceAttribute(): string
     {
@@ -217,6 +245,34 @@ class Car extends Model
                        ->orWhere('model', 'like', "%{$search}%");
                 })
             );
+    }
+
+    // Filter by dynamic attributes
+    public function scopeFilterByAttributes(Builder $query, array $attributeFilters): Builder
+    {
+        foreach ($attributeFilters as $attributeId => $value) {
+            if ($value === null || $value === '' || (is_array($value) && empty($value))) {
+                continue;
+            }
+
+            $query->whereHas('attributeValues', function ($q) use ($attributeId, $value) {
+                $q->where('attribute_id', $attributeId);
+                
+                if (is_array($value)) {
+                    // For multiselect or array values
+                    $q->where(function ($sq) use ($value) {
+                        foreach ($value as $v) {
+                            $sq->orWhere('value', 'like', "%{$v}%");
+                        }
+                    });
+                } else {
+                    // For single values (text, number, select, boolean)
+                    $q->where('value', $value);
+                }
+            });
+        }
+        
+        return $query;
     }
 
     // Methods

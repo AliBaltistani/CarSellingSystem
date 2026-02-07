@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\InquiryController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\CarController as AdminCarController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
@@ -13,6 +14,11 @@ use App\Http\Controllers\Admin\InquiryController as AdminInquiryController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\LocationController as AdminLocationController;
+use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
+use App\Http\Controllers\Admin\FinancingPartnerController as AdminFinancingPartnerController;
+use App\Http\Controllers\Admin\OfferController as AdminOfferController;
+use App\Http\Controllers\Admin\AttributeGroupController as AdminAttributeGroupController;
+use App\Http\Controllers\Admin\AttributeController as AdminAttributeController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +39,9 @@ Route::get('/cars/{car}', [CarController::class, 'show'])->name('cars.show');
 
 // Inquiry Routes (AJAX)
 Route::post('/cars/{car}/inquiry', [InquiryController::class, 'store'])->name('inquiries.store');
+
+// Dynamic Pages (must be after other routes to avoid conflicts)
+Route::get('/page/{slug}', [PageController::class, 'show'])->name('page.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -145,6 +154,49 @@ Route::prefix('admin')
             ->name('banners.toggle-active');
         Route::post('banners/reorder', [AdminBannerController::class, 'reorder'])
             ->name('banners.reorder');
+
+        // Testimonials Management
+        Route::resource('testimonials', AdminTestimonialController::class)->except('show');
+        Route::post('testimonials/{testimonial}/toggle-active', [AdminTestimonialController::class, 'toggleActive'])
+            ->name('testimonials.toggle-active');
+
+        // Financing Partners Management
+        Route::resource('financing-partners', AdminFinancingPartnerController::class)->except('show');
+        Route::post('financing-partners/{financing_partner}/toggle-active', [AdminFinancingPartnerController::class, 'toggleActive'])
+            ->name('financing-partners.toggle-active');
+
+        // Offers Management
+        Route::resource('offers', AdminOfferController::class)->except('show');
+        Route::post('offers/{offer}/toggle-active', [AdminOfferController::class, 'toggleActive'])
+            ->name('offers.toggle-active');
+
+        // Dynamic Attribute Engine
+        Route::resource('attribute-groups', AdminAttributeGroupController::class)->except('show');
+        Route::post('attribute-groups/{attribute_group}/toggle-active', [AdminAttributeGroupController::class, 'toggleActive'])
+            ->name('attribute-groups.toggle-active');
+
+        Route::resource('attributes', AdminAttributeController::class)->except('show');
+        Route::post('attributes/{attribute}/toggle-active', [AdminAttributeController::class, 'toggleActive'])
+            ->name('attributes.toggle-active');
+        Route::get('attributes/{attribute}/categories', [AdminAttributeController::class, 'categories'])
+            ->name('attributes.categories');
+        Route::post('attributes/{attribute}/categories', [AdminAttributeController::class, 'updateCategories'])
+            ->name('attributes.update-categories');
+        
+        // Attribute Import/Export
+        Route::get('attributes-import-export', [\App\Http\Controllers\Admin\AttributeImportExportController::class, 'showImportForm'])
+            ->name('attributes.import-export');
+        Route::get('attributes-export', [\App\Http\Controllers\Admin\AttributeImportExportController::class, 'export'])
+            ->name('attributes.export');
+        Route::get('attributes-export-csv', [\App\Http\Controllers\Admin\AttributeImportExportController::class, 'exportCsv'])
+            ->name('attributes.export-csv');
+        Route::post('attributes-import', [\App\Http\Controllers\Admin\AttributeImportExportController::class, 'import'])
+            ->name('attributes.import');
+
+        // Pages Management
+        Route::resource('pages', \App\Http\Controllers\Admin\AdminPageController::class)->except('show');
+        Route::post('pages/{page}/toggle-active', [\App\Http\Controllers\Admin\AdminPageController::class, 'toggleActive'])
+            ->name('pages.toggle-active');
     });
 
 /*
@@ -162,6 +214,10 @@ Route::prefix('api')->group(function () {
     
     // Car search suggestions
     Route::get('/cars/suggestions', [SearchController::class, 'suggestions'])->name('api.cars.suggestions');
+    
+    // Category attributes for dynamic forms
+    Route::get('/categories/{category}/attributes', [\App\Http\Controllers\Api\CategoryAttributeController::class, 'index'])
+        ->name('api.categories.attributes');
 });
 
 require __DIR__.'/auth.php';

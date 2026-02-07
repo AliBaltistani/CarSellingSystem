@@ -17,6 +17,12 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             UserSeeder::class,
             CarSeeder::class,
+            TestimonialSeeder::class,
+            FinancingPartnerSeeder::class,
+            OfferSeeder::class,
+            AttributeSeeder::class,
+            PageSeeder::class,
         ]);
     }
 }
+

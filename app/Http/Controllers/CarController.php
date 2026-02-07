@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attribute;
 use App\Models\Car;
 use App\Models\Category;
 use App\Models\CarImage;
@@ -22,12 +23,18 @@ class CarController extends Controller
             ->published()
             ->available();
 
-        // Apply filters
+        // Apply standard filters
         $query->filter($request->only([
             'make', 'model', 'min_price', 'max_price',
             'min_year', 'max_year', 'condition', 'transmission',
             'fuel_type', 'body_type', 'category', 'search'
         ]));
+
+        // Apply dynamic attribute filters
+        $attributeFilters = $request->input('attr', []);
+        if (!empty($attributeFilters)) {
+            $query->filterByAttributes($attributeFilters);
+        }
 
         // Location-based filtering
         if ($request->filled(['latitude', 'longitude'])) {
@@ -51,9 +58,17 @@ class CarController extends Controller
             ->sort()
             ->values();
 
+        // Get filterable dynamic attributes with options
+        $filterableAttributes = Attribute::active()
+            ->filterable()
+            ->with(['options', 'group'])
+            ->ordered()
+            ->get()
+            ->groupBy(fn($attr) => $attr->group?->name ?? 'Other');
+
         $seo = $this->seoService->generateListingMeta($request->all());
 
-        return view('cars.index', compact('cars', 'categories', 'makes', 'seo'));
+        return view('cars.index', compact('cars', 'categories', 'makes', 'filterableAttributes', 'seo'));
     }
 
     public function show(Car $car)

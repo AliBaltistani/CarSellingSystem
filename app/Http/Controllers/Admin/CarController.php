@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Car;
+use App\Models\CarAttributeValue;
 use App\Models\Category;
 use App\Models\CarImage;
 use Illuminate\Http\Request;
@@ -110,6 +111,11 @@ class CarController extends Controller
             }
         }
 
+        // Save dynamic attribute values
+        if ($request->has('attributes')) {
+            CarAttributeValue::saveForCar($car, $request->input('attributes', []));
+        }
+
         return redirect()->route('admin.cars.index')
             ->with('success', 'Car created successfully!');
     }
@@ -123,7 +129,7 @@ class CarController extends Controller
     public function edit(Car $car)
     {
         $categories = Category::active()->orderBy('name')->get();
-        $car->load('images');
+        $car->load(['images', 'attributeValues']);
         return view('admin.cars.edit', compact('car', 'categories'));
     }
 
@@ -180,6 +186,11 @@ class CarController extends Controller
                     'is_primary' => false,
                 ]);
             }
+        }
+
+        // Save dynamic attribute values
+        if ($request->has('attributes')) {
+            CarAttributeValue::saveForCar($car, $request->input('attributes', []));
         }
 
         return redirect()->route('admin.cars.index')

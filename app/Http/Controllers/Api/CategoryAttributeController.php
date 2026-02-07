@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Attribute;
+use App\Models\Category;
+use Illuminate\Http\Request;
+
+class CategoryAttributeController extends Controller
+{
+    /**
+     * Get attributes for a specific category
+     */
+    public function index(Category $category)
+    {
+        // Get attributes assigned to this category, grouped by their group
+        $attributes = $category->getAttributesWithOptions();
+
+        // Group by attribute group
+        $grouped = $attributes->groupBy(function($attr) {
+            return $attr->group?->name ?? 'General';
+        });
+
+        // Format for JS consumption
+        $result = [];
+        foreach ($grouped as $groupName => $attrs) {
+            $result[] = [
+                'group' => $groupName,
+                'group_icon' => $attrs->first()->group?->icon ?? '📋',
+                'attributes' => $attrs->map(function($attr) {
+                    return [
+                        'id' => $attr->id,
+                        'name' => $attr->name,
+                        'slug' => $attr->slug,
+                        'type' => $attr->type,
+                        'is_required' => (bool) $attr->pivot?->is_required ?? $attr->is_required,
+                        'placeholder' => $attr->placeholder,
+                        'help_text' => $attr->help_text,
+                        'prefix' => $attr->prefix,
+                        'suffix' => $attr->suffix,
+                        'icon' => $attr->icon,
+                        'default_value' => $attr->default_value,
+                        'min_value' => $attr->min_value,
+                        'max_value' => $attr->max_value,
+                        'step' => $attr->step,
+                        'options' => $attr->hasOptions() ? $attr->options->map(fn($o) => [
+                            'label' => $o->label,
+                            'value' => $o->value,
+                            'color' => $o->color,
+                            'icon' => $o->icon,
+                            'is_default' => $o->is_default,
+                        ])->values() : [],
+                    ];
+                })->values(),
+            ];
+        }
+
+        return response()->json($result);
+    }
+}

@@ -96,6 +96,95 @@
                         </select>
                     </div>
 
+                    <!-- Dynamic Attribute Filters -->
+                    @if(isset($filterableAttributes) && $filterableAttributes->count() > 0)
+                        <div class="border-t border-slate-200 pt-4 mt-4">
+                            <h3 class="text-md font-semibold text-slate-800 mb-4">Advanced Filters</h3>
+                            
+                            @foreach($filterableAttributes as $groupName => $attributes)
+                                @if($attributes->count() > 0)
+                                    <div class="mb-4">
+                                        <h4 class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">{{ $groupName }}</h4>
+                                        
+                                        @foreach($attributes as $attribute)
+                                            <div class="mb-4">
+                                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                                    @if($attribute->icon)<span class="mr-1">{{ $attribute->icon }}</span>@endif
+                                                    {{ $attribute->name }}
+                                                </label>
+                                                
+                                                @switch($attribute->type)
+                                                    @case('select')
+                                                        <select name="attr[{{ $attribute->id }}]" 
+                                                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                                                            <option value="">Any {{ $attribute->name }}</option>
+                                                            @foreach($attribute->options as $option)
+                                                                <option value="{{ $option->value }}" 
+                                                                    {{ request("attr.{$attribute->id}") == $option->value ? 'selected' : '' }}>
+                                                                    {{ $option->label }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        @break
+
+                                                    @case('multiselect')
+                                                        <div class="space-y-1 max-h-28 overflow-y-auto bg-slate-50 rounded-lg p-2">
+                                                            @foreach($attribute->options as $option)
+                                                                <label class="flex items-center gap-2 cursor-pointer text-sm">
+                                                                    <input type="checkbox" name="attr[{{ $attribute->id }}][]" 
+                                                                        value="{{ $option->value }}"
+                                                                        {{ in_array($option->value, (array)request("attr.{$attribute->id}", [])) ? 'checked' : '' }}
+                                                                        class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+                                                                    <span class="text-slate-700">{{ $option->label }}</span>
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                        @break
+
+                                                    @case('boolean')
+                                                        <select name="attr[{{ $attribute->id }}]" 
+                                                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                                                            <option value="">Any</option>
+                                                            <option value="1" {{ request("attr.{$attribute->id}") === '1' ? 'selected' : '' }}>Yes</option>
+                                                            <option value="0" {{ request("attr.{$attribute->id}") === '0' ? 'selected' : '' }}>No</option>
+                                                        </select>
+                                                        @break
+
+                                                    @case('color')
+                                                        <div class="flex flex-wrap gap-2">
+                                                            @foreach($attribute->options as $option)
+                                                                <label class="cursor-pointer">
+                                                                    <input type="radio" name="attr[{{ $attribute->id }}]" 
+                                                                        value="{{ $option->value }}" class="sr-only peer"
+                                                                        {{ request("attr.{$attribute->id}") == $option->value ? 'checked' : '' }}>
+                                                                    <span class="block w-7 h-7 rounded-full border-2 border-slate-200 peer-checked:border-amber-500 peer-checked:ring-2 peer-checked:ring-amber-200"
+                                                                        style="background-color: {{ $option->color ?? $option->value }}" 
+                                                                        title="{{ $option->label }}"></span>
+                                                                </label>
+                                                            @endforeach
+                                                            <label class="cursor-pointer flex items-center">
+                                                                <input type="radio" name="attr[{{ $attribute->id }}]" 
+                                                                    value="" class="sr-only peer"
+                                                                    {{ !request("attr.{$attribute->id}") ? 'checked' : '' }}>
+                                                                <span class="text-xs text-slate-500 peer-checked:text-amber-600">Any</span>
+                                                            </label>
+                                                        </div>
+                                                        @break
+
+                                                    @default
+                                                        <input type="text" name="attr[{{ $attribute->id }}]" 
+                                                            value="{{ request("attr.{$attribute->id}") }}"
+                                                            placeholder="{{ $attribute->placeholder ?: "Enter {$attribute->name}" }}"
+                                                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                                                @endswitch
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+
                     <!-- Buttons -->
                     <div class="flex gap-2">
                         <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all">

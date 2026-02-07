@@ -379,6 +379,148 @@
         </div>
     </section>
 
+    <!-- Testimonials Section -->
+    @if(isset($testimonials) && $testimonials->count() > 0)
+    <section class="py-20 bg-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Happy Customers</h2>
+                <p class="mt-3 text-slate-600">What our customers say about us</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach($testimonials as $testimonial)
+                    <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow">
+                        <!-- Rating Stars -->
+                        <div class="flex items-center mb-4">
+                            @for($i = 1; $i <= 5; $i++)
+                                <svg class="w-5 h-5 {{ $i <= $testimonial->rating ? 'text-amber-400' : 'text-slate-300' }}" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            @endfor
+                        </div>
+                        
+                        <!-- Review Text -->
+                        <p class="text-slate-600 mb-6 line-clamp-4">
+                            "{{ $testimonial->review }}"
+                        </p>
+                        
+                        <!-- Customer Info -->
+                        <div class="flex items-center">
+                            <img src="{{ $testimonial->photo_url }}" alt="{{ $testimonial->customer_name }}" 
+                                class="w-12 h-12 rounded-full object-cover mr-4">
+                            <div>
+                                <div class="font-semibold text-slate-900">{{ $testimonial->customer_name }}</div>
+                                @if($testimonial->designation)
+                                    <div class="text-sm text-slate-500">{{ $testimonial->designation }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
+    <!-- Financing Partners Section -->
+    @if($financingPartners->count() > 0)
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-900 mb-3">Our Financing Partners</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto">Trusted banks and financial institutions to help you drive your dream car home</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                @foreach($financingPartners as $partner)
+                    <a href="{{ $partner->website_url ?: '#' }}" 
+                       target="{{ $partner->website_url ? '_blank' : '_self' }}"
+                       class="group bg-slate-50 hover:bg-white rounded-xl p-6 flex items-center justify-center transition-all hover:shadow-lg border border-slate-100"
+                       title="{{ $partner->name }}">
+                        <img src="{{ $partner->logo_url }}" alt="{{ $partner->name }}" 
+                             class="max-h-12 max-w-full object-contain grayscale group-hover:grayscale-0 transition-all">
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
+    <!-- Our Offers Section -->
+    @if($offers->count() > 0)
+    <section class="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="inline-block px-4 py-1 bg-amber-500/20 text-amber-400 text-sm font-semibold rounded-full mb-4">Special Offers</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Exclusive Deals & Packages</h2>
+                <p class="text-slate-300 max-w-2xl mx-auto">Take advantage of our limited-time offers and service packages</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($offers as $offer)
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/50 transition-all group">
+                        <!-- Badge -->
+                        @if($offer->badge)
+                            <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold text-center py-2 uppercase tracking-wider">
+                                {{ $offer->badge }}
+                            </div>
+                        @endif
+                        
+                        <div class="p-6">
+                            <!-- Title & Icon -->
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-white">{{ $offer->title }}</h3>
+                                    @if($offer->price_label)
+                                        <span class="text-amber-400 text-sm font-medium">{{ $offer->price_label }}</span>
+                                    @endif
+                                </div>
+                                @if($offer->icon_url)
+                                    <img src="{{ $offer->icon_url }}" alt="" class="w-12 h-12 object-contain">
+                                @endif
+                            </div>
+                            
+                            <!-- Description -->
+                            @if($offer->description)
+                                <p class="text-slate-300 text-sm mb-4">{{ Str::limit($offer->description, 120) }}</p>
+                            @endif
+                            
+                            <!-- Features -->
+                            @if($offer->features && count($offer->features) > 0)
+                                <ul class="space-y-2 mb-6">
+                                    @foreach(array_slice($offer->features, 0, 4) as $feature)
+                                        <li class="flex items-center text-sm text-slate-300">
+                                            <svg class="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            {{ $feature }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            
+                            <!-- Pricing -->
+                            @if($offer->price_from)
+                                <div class="flex items-baseline gap-2 mb-4">
+                                    <span class="text-slate-400 text-sm">From</span>
+                                    <span class="text-2xl font-bold text-white">AED {{ number_format($offer->price_from) }}</span>
+                                </div>
+                            @endif
+                            
+                            <!-- CTA -->
+                            <a href="{{ $offer->cta_link ?: route('cars.index') }}" 
+                               class="block w-full text-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-all group-hover:shadow-lg group-hover:shadow-amber-500/25">
+                                {{ $offer->cta_text ?? 'Learn More' }}
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
     @push('scripts')
     <script>
         // Hero Slider Component

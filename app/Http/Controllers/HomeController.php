@@ -6,6 +6,9 @@ use App\Models\Car;
 use App\Models\Category;
 use App\Models\Setting;
 use App\Models\Banner;
+use App\Models\Testimonial;
+use App\Models\FinancingPartner;
+use App\Models\Offer;
 use App\Services\SeoService;
 
 class HomeController extends Controller
@@ -48,6 +51,15 @@ class HomeController extends Controller
             ->sort()
             ->values();
 
+        // Fetch testimonials
+        $testimonials = Testimonial::getDisplayTestimonials(6);
+
+        // Fetch financing partners
+        $financingPartners = FinancingPartner::getDisplayPartners();
+
+        // Fetch offers
+        $offers = Offer::getDisplayOffers(6);
+
         $stats = [
             'total_cars' => Setting::get('stats_total_cars', Car::published()->available()->count()),
             'happy_customers' => Setting::get('stats_happy_customers', 1000),
@@ -66,9 +78,11 @@ class HomeController extends Controller
             'latestCars',
             'banners',
             'makes',
+            'testimonials',
+            'financingPartners',
+            'offers',
             'stats',
             'seo'
         ));
     }
 }
-
