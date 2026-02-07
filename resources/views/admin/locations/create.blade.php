@@ -1,0 +1,142 @@
+<x-layouts.admin title="Add Location">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">Add Location</h1>
+        <p class="text-slate-600">Add a new location for car listings</p>
+    </div>
+
+    <div class="max-w-2xl" x-data="locationSearch()">
+        <form action="{{ route('admin.locations.store') }}" method="POST" class="space-y-6">
+            @csrf
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Search Location</h2>
+                
+                <!-- Live Search -->
+                <div class="relative mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Search from OpenStreetMap</label>
+                    <input type="text" x-model="searchQuery" @input.debounce.400ms="searchLocations()"
+                        @focus="showResults = true"
+                        placeholder="Type city name to search..."
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                    
+                    <!-- Search Results Dropdown -->
+                    <div x-show="showResults && (results.length > 0 || searching)" x-transition @click.away="showResults = false"
+                        class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                        <template x-if="searching">
+                            <div class="px-4 py-3 text-slate-500 text-center">Searching...</div>
+                        </template>
+                        <template x-for="result in results" :key="result.display_name">
+                            <button type="button" @click="selectLocation(result)"
+                                class="w-full px-4 py-3 text-left hover:bg-amber-50 border-b border-slate-100 last:border-0">
+                                <div class="font-medium text-slate-900" x-text="result.city"></div>
+                                <div class="text-sm text-slate-500" x-text="result.state ? (result.state + ', ' + result.country) : result.country"></div>
+                            </button>
+                        </template>
+                        <template x-if="!searching && results.length === 0 && searchQuery.length >= 2">
+                            <div class="px-4 py-3 text-slate-500 text-center">No results found</div>
+                        </template>
+                    </div>
+                </div>
+
+                <hr class="my-6">
+
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Location Details</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">City *</label>
+                        <input type="text" name="city" x-model="form.city" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 @error('city') border-red-500 @enderror">
+                        @error('city')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">State/Province</label>
+                        <input type="text" name="state" x-model="form.state"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Country *</label>
+                        <input type="text" name="country" x-model="form.country" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 @error('country') border-red-500 @enderror">
+                        @error('country')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Display Name</label>
+                        <input type="text" name="display_name" x-model="form.display_name"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Latitude</label>
+                        <input type="number" name="latitude" x-model="form.latitude" step="0.0000001"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Longitude</label>
+                        <input type="number" name="longitude" x-model="form.longitude" step="0.0000001"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-4">
+                <a href="{{ route('admin.locations.index') }}" class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg">Cancel</a>
+                <button type="submit" class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg">Create Location</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function locationSearch() {
+            return {
+                searchQuery: '',
+                results: [],
+                searching: false,
+                showResults: false,
+                form: {
+                    city: '{{ old('city') }}',
+                    state: '{{ old('state') }}',
+                    country: '{{ old('country') }}',
+                    display_name: '{{ old('display_name') }}',
+                    latitude: '{{ old('latitude') }}',
+                    longitude: '{{ old('longitude') }}',
+                },
+
+                async searchLocations() {
+                    if (this.searchQuery.length < 2) {
+                        this.results = [];
+                        return;
+                    }
+
+                    this.searching = true;
+                    this.showResults = true;
+
+                    try {
+                        const response = await fetch(`{{ route('admin.locations.search-api') }}?q=${encodeURIComponent(this.searchQuery)}`);
+                        this.results = await response.json();
+                    } catch (error) {
+                        console.error('Search error:', error);
+                        this.results = [];
+                    }
+
+                    this.searching = false;
+                },
+
+                selectLocation(result) {
+                    this.form.city = result.city || '';
+                    this.form.state = result.state || '';
+                    this.form.country = result.country || '';
+                    this.form.display_name = result.display_name || '';
+                    this.form.latitude = result.lat || '';
+                    this.form.longitude = result.lon || '';
+                    this.showResults = false;
+                    this.searchQuery = result.city;
+                }
+            }
+        }
+    </script>
+</x-layouts.admin>

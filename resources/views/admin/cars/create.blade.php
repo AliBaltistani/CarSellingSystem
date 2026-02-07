@@ -134,7 +134,7 @@
         </div>
 
         <!-- Contact & Location -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-6" x-data="locationSearch()">
             <h2 class="text-lg font-semibold text-slate-900 mb-4">Contact & Location</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -148,18 +148,115 @@
                     <input type="text" name="phone_number" value="{{ old('phone_number') }}"
                         class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">City</label>
-                    <input type="text" name="city" value="{{ old('city') }}"
+                
+                <!-- Location Search -->
+                <div class="lg:col-span-2 relative">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Location (City) *</label>
+                    <input type="text" x-model="searchQuery" 
+                        @input.debounce.400ms="searchLocations()"
+                        @focus="showResults = true"
+                        placeholder="Search city..."
                         class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Country</label>
-                    <input type="text" name="country" value="{{ old('country', 'UAE') }}"
-                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                    
+                    <!-- Hidden fields for form submission -->
+                    <input type="hidden" name="city" x-bind:value="selectedCity">
+                    <input type="hidden" name="country" x-bind:value="selectedCountry">
+                    
+                    <!-- Search Results Dropdown -->
+                    <div x-show="showResults && (results.length > 0 || searching)" x-transition @click.away="showResults = false"
+                        class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                        <template x-if="searching">
+                            <div class="px-4 py-3 text-slate-500 text-center">Searching...</div>
+                        </template>
+                        <template x-for="result in results" :key="result.display_name">
+                            <button type="button" @click="selectLocation(result)"
+                                class="w-full px-4 py-3 text-left hover:bg-amber-50 border-b border-slate-100 last:border-0">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="font-medium text-slate-900" x-text="result.city"></span>
+                                        <span class="text-sm text-slate-500" x-text="', ' + result.country"></span>
+                                    </div>
+                                    <span x-show="result.source === 'db'" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Saved</span>
+                                    <span x-show="result.source === 'api'" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">New</span>
+                                </div>
+                            </button>
+                        </template>
+                        <template x-if="!searching && results.length === 0 && searchQuery.length >= 2">
+                            <div class="px-4 py-3 text-slate-500 text-center">No locations found</div>
+                        </template>
+                    </div>
+                    
+                    <!-- Selected Location Display -->
+                    <div x-show="selectedCity" class="mt-2 text-sm text-green-600">
+                        Selected: <span x-text="selectedCity + ', ' + selectedCountry"></span>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <script>
+            function locationSearch() {
+                return {
+                    searchQuery: '{{ old('city') }}',
+                    results: [],
+                    searching: false,
+                    showResults: false,
+                    selectedCity: '{{ old('city') }}',
+                    selectedCountry: '{{ old('country', 'Pakistan') }}',
+
+                    async searchLocations() {
+                        if (this.searchQuery.length < 2) {
+                            this.results = [];
+                            return;
+                        }
+
+                        this.searching = true;
+                        this.showResults = true;
+
+                        try {
+                            const response = await fetch(`/api/locations/combined?q=${encodeURIComponent(this.searchQuery)}`);
+                            this.results = await response.json();
+                        } catch (error) {
+                            console.error('Location search error:', error);
+                            this.results = [];
+                        }
+
+                        this.searching = false;
+                    },
+
+                    async selectLocation(result) {
+                        this.selectedCity = result.city;
+                        this.selectedCountry = result.country;
+                        this.searchQuery = result.city;
+                        this.showResults = false;
+                        this.results = [];
+
+                        // If it's from API, save it to DB
+                        if (result.source === 'api') {
+                            try {
+                                await fetch('/api/locations/create', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: JSON.stringify({
+                                        city: result.city,
+                                        state: result.state,
+                                        country: result.country,
+                                        display_name: result.display_name,
+                                        lat: result.lat,
+                                        lon: result.lon
+                                    })
+                                });
+                            } catch (error) {
+                                console.error('Failed to save location:', error);
+                            }
+                        }
+                    }
+                }
+            }
+        </script>
 
         <!-- Status & Options -->
         <div class="bg-white rounded-xl shadow-sm p-6">

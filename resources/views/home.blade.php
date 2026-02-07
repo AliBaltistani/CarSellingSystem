@@ -432,6 +432,7 @@
                 searchingLocation: false,
                 gettingLocation: false,
                 selectedLocation: '',
+                selectedCity: '',
                 selectedLat: null,
                 selectedLon: null,
                 
@@ -465,8 +466,9 @@
                         if (this.selectedCondition) {
                             params.append('condition', this.selectedCondition);
                         }
-                        if (this.locationQuery) {
-                            params.append('city', this.locationQuery);
+                        if (this.selectedCity || this.locationQuery) {
+                            // Send just the city name if available, otherwise send the full query
+                            params.append('city', this.selectedCity || this.locationQuery.split(',')[0].trim());
                         }
                         
                         const response = await fetch(`/api/cars/suggestions?${params.toString()}`);
@@ -505,6 +507,8 @@
                 
                 selectLocation(loc) {
                     const displayName = loc.city ? `${loc.city}, ${loc.country || ''}` : loc.name || loc.display_name;
+                    // Store the city separately for API queries
+                    this.selectedCity = loc.city || (displayName.split(',')[0] || '').trim();
                     this.locationQuery = displayName;
                     this.selectedLocation = displayName;
                     this.selectedLat = loc.lat;
@@ -516,6 +520,7 @@
                     this.searchCars();
                     
                     localStorage.setItem('selectedLocation', displayName);
+                    localStorage.setItem('selectedCity', this.selectedCity);
                     localStorage.setItem('selectedLat', loc.lat);
                     localStorage.setItem('selectedLon', loc.lon);
                 },

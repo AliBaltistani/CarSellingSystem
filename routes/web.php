@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\InquiryController as AdminInquiryController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\BannerController as AdminBannerController;
+use App\Http\Controllers\Admin\LocationController as AdminLocationController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Route;
@@ -131,6 +132,13 @@ Route::prefix('admin')
         Route::delete('settings/{setting}', [AdminSettingController::class, 'destroy'])
             ->name('settings.destroy');
 
+        // Locations Management
+        Route::get('locations/search-api', [AdminLocationController::class, 'searchApi'])
+            ->name('locations.search-api');
+        Route::resource('locations', AdminLocationController::class)->except('show');
+        Route::post('locations/{location}/toggle-active', [AdminLocationController::class, 'toggleActive'])
+            ->name('locations.toggle-active');
+
         // Banners Management
         Route::resource('banners', AdminBannerController::class)->except('show');
         Route::post('banners/{banner}/toggle-active', [AdminBannerController::class, 'toggleActive'])
@@ -149,6 +157,8 @@ Route::prefix('api')->group(function () {
     // Location search using Nominatim
     Route::get('/locations/search', [LocationController::class, 'search'])->name('api.locations.search');
     Route::get('/locations/reverse', [LocationController::class, 'reverse'])->name('api.locations.reverse');
+    Route::get('/locations/combined', [LocationController::class, 'searchCombined'])->name('api.locations.combined');
+    Route::post('/locations/create', [LocationController::class, 'createFromApi'])->name('api.locations.create');
     
     // Car search suggestions
     Route::get('/cars/suggestions', [SearchController::class, 'suggestions'])->name('api.cars.suggestions');

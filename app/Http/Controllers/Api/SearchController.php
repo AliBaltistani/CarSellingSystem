@@ -56,9 +56,29 @@ class SearchController extends Controller
             $query->where('condition', $condition);
         }
 
-        // Apply city/location filter
+        // Apply city/location filter - search across city, state, and country columns
+        // This handles full location strings like "Abu Dhabi, United Arab Emirates"
         if ($city) {
-            $query->where('city', 'like', "%{$city}%");
+            // Split the location by comma to handle "City, Country" format
+            $locationParts = array_map('trim', explode(',', $city));
+            
+            $query->where(function ($q) use ($city, $locationParts) {
+                // Try to match the full string against city
+                $q->where('city', 'like', "%{$locationParts[0]}%");
+                
+                // Also match against country if provided in the location string
+                if (count($locationParts) > 1) {
+                    // Match city AND country for more accurate results
+                    $q->orWhere(function ($subQ) use ($locationParts) {
+                        $subQ->where('city', 'like', "%{$locationParts[0]}%")
+                             ->where('country', 'like', "%{$locationParts[count($locationParts) - 1]}%");
+                    });
+                }
+                
+                // Also search in state and country columns for flexibility
+                $q->orWhere('state', 'like', "%{$locationParts[0]}%")
+                  ->orWhere('country', 'like', "%{$locationParts[0]}%");
+            });
         }
 
         $cars = $query->limit(6)
