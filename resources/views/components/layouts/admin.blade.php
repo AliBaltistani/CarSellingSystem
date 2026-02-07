@@ -11,6 +11,23 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Quill Rich Text Editor CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        .quill-editor { font-family: inherit; }
+        .quill-editor .ql-editor { min-height: 150px; font-size: 14px; line-height: 1.6; }
+        .ql-toolbar.ql-snow { border: 1px solid #e2e8f0; border-radius: 0.5rem 0.5rem 0 0; background: #f8fafc; }
+        .ql-container.ql-snow { border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 0.5rem 0.5rem; }
+        .ql-editor:focus { outline: none; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3); }
+        .ql-snow .ql-picker { color: #475569; }
+        .ql-snow .ql-stroke { stroke: #475569; }
+        .ql-snow .ql-fill { fill: #475569; }
+        .ql-snow.ql-toolbar button:hover, .ql-snow.ql-toolbar button.ql-active { color: #f59e0b; }
+        .ql-snow.ql-toolbar button:hover .ql-stroke, .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: #f59e0b; }
+        .ql-snow.ql-toolbar button:hover .ql-fill, .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: #f59e0b; }
+    </style>
+    @stack('styles')
 </head>
 <body class="font-sans antialiased bg-slate-100">
     <div class="min-h-screen flex" x-data="{ sidebarOpen: true }">
@@ -191,6 +208,37 @@
         </div>
     </div>
 
+    <!-- Quill Rich Text Editor JS -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.quill-editor').forEach(function(el) {
+                if (el.classList.contains('ql-container')) return;
+                const hiddenInput = document.getElementById('hidden_' + el.id);
+                if (!hiddenInput) return;
+                
+                const quill = new Quill('#' + el.id, {
+                    theme: 'snow',
+                    placeholder: 'Enter content here...',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['blockquote', 'code-block'],
+                            ['clean']
+                        ]
+                    }
+                });
+                
+                if (hiddenInput.value) quill.root.innerHTML = hiddenInput.value;
+                quill.on('text-change', function() { hiddenInput.value = quill.root.innerHTML; });
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

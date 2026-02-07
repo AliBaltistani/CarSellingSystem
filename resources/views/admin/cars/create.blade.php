@@ -129,8 +129,7 @@
         <!-- Description -->
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h2 class="text-lg font-semibold text-slate-900 mb-4">Description</h2>
-            <textarea name="description" rows="5" required
-                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">{{ old('description') }}</textarea>
+            <x-forms.rich-editor name="description" value="" height="200px" :required="true" />
         </div>
 
         <!-- Dynamic Attributes Section -->

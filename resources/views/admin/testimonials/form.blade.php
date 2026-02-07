@@ -58,9 +58,8 @@
 
                 <!-- Review Text -->
                 <div>
-                    <label for="review" class="block text-sm font-medium text-slate-700 mb-1">Review Text *</label>
-                    <textarea id="review" name="review" rows="4" required placeholder="Customer's testimonial text..."
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">{{ old('review', $testimonial->review) }}</textarea>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Review Text *</label>
+                    <x-forms.rich-editor name="review" :value="$testimonial->review" height="150px" :required="true" />
                     @error('review')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
