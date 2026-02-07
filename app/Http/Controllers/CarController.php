@@ -1,0 +1,265 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Car;
+use App\Models\Category;
+use App\Models\CarImage;
+use App\Models\Setting;
+use App\Services\SeoService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class CarController extends Controller
+{
+    public function __construct(
+        protected SeoService $seoService
+    ) {}
+
+    public function index(Request $request)
+    {
+        $query = Car::with(['category', 'images'])
+            ->published()
+            ->available();
+
+        // Apply filters
+        $query->filter($request->only([
+            'make', 'model', 'min_price', 'max_price',
+            'min_year', 'max_year', 'condition', 'transmission',
+            'fuel_type', 'body_type', 'category', 'search'
+        ]));
+
+        // Location-based filtering
+        if ($request->filled(['latitude', 'longitude'])) {
+            $radius = $request->input('radius', 50);
+            $query->nearby(
+                (float) $request->latitude,
+                (float) $request->longitude,
+                (int) $radius
+            );
+        } else {
+            $query->latest();
+        }
+
+        $cars = $query->paginate((int) Setting::get('cars_per_page', 12));
+        $categories = Category::active()->orderBy('order')->get();
+
+        // Get filter options
+        $makes = Car::published()->available()
+            ->distinct()
+            ->pluck('make')
+            ->sort()
+            ->values();
+
+        $seo = $this->seoService->generateListingMeta($request->all());
+
+        return view('cars.index', compact('cars', 'categories', 'makes', 'seo'));
+    }
+
+    public function show(Car $car)
+    {
+        if (!$car->is_published && (!auth()->check() || auth()->id() !== $car->user_id)) {
+            abort(404);
+        }
+
+        $car->load(['category', 'images', 'user']);
+        
+        // Increment views
+        $car->incrementViews();
+
+        // Get related cars
+        $relatedCars = Car::with(['images'])
+            ->published()
+            ->available()
+            ->where('id', '!=', $car->id)
+            ->where(function ($query) use ($car) {
+                $query->where('category_id', $car->category_id)
+                    ->orWhere('make', $car->make);
+            })
+            ->inRandomOrder()
+            ->limit(4)
+            ->get();
+
+        $seo = $this->seoService->generateCarMeta($car);
+        $jsonLd = $this->seoService->generateStructuredData($car);
+
+        return view('cars.show', compact('car', 'relatedCars', 'seo', 'jsonLd'));
+    }
+
+    public function byCategory(Category $category, Request $request)
+    {
+        $query = Car::with(['category', 'images'])
+            ->published()
+            ->available()
+            ->where('category_id', $category->id);
+
+        // Apply filters
+        $query->filter($request->except('category'));
+        
+        $cars = $query->latest()->paginate((int) Setting::get('cars_per_page', 12));
+
+        $seo = $this->seoService->generateListingMeta(['category' => $category->name]);
+
+        return view('cars.index', compact('cars', 'category', 'seo'));
+    }
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:2'
+        ]);
+
+        $query = Car::with(['category', 'images'])
+            ->published()
+            ->available()
+            ->where(function ($q) use ($request) {
+                $search = $request->input('q');
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('make', 'like', "%{$search}%")
+                  ->orWhere('model', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+
+        $cars = $query->latest()->paginate(12);
+
+        return view('cars.index', [
+            'cars' => $cars,
+            'searchQuery' => $request->input('q'),
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | User's Own Listings
+    |--------------------------------------------------------------------------
+    */
+
+    public function myListings()
+    {
+        $cars = Car::with(['category', 'images'])
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->paginate(10);
+
+        return view('cars.my-listings', compact('cars'));
+    }
+
+    public function create()
+    {
+        $categories = Category::active()->orderBy('name')->get();
+        return view('cars.create', compact('categories'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $this->validateCarRequest($request);
+        $validated['user_id'] = auth()->id();
+        $validated['is_published'] = $request->boolean('is_published', true);
+        $validated['published_at'] = $validated['is_published'] ? now() : null;
+
+        $car = Car::create($validated);
+
+        // Handle image uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('cars/' . $car->id, 'public');
+                CarImage::create([
+                    'car_id' => $car->id,
+                    'path' => $path,
+                    'order' => $index,
+                    'is_primary' => $index === 0,
+                ]);
+            }
+        }
+
+        return redirect()->route('cars.my-listings')
+            ->with('success', 'Your car listing has been created!');
+    }
+
+    public function edit(Car $car)
+    {
+        $this->authorizeCarOwner($car);
+
+        $categories = Category::active()->orderBy('name')->get();
+        $car->load('images');
+
+        return view('cars.edit', compact('car', 'categories'));
+    }
+
+    public function update(Request $request, Car $car)
+    {
+        $this->authorizeCarOwner($car);
+
+        $validated = $this->validateCarRequest($request, $car);
+        $car->update($validated);
+
+        // Handle new image uploads
+        if ($request->hasFile('images')) {
+            $currentMaxOrder = $car->images()->max('order') ?? -1;
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('cars/' . $car->id, 'public');
+                CarImage::create([
+                    'car_id' => $car->id,
+                    'path' => $path,
+                    'order' => $currentMaxOrder + $index + 1,
+                    'is_primary' => false,
+                ]);
+            }
+        }
+
+        return redirect()->route('cars.my-listings')
+            ->with('success', 'Your car listing has been updated!');
+    }
+
+    public function destroy(Car $car)
+    {
+        $this->authorizeCarOwner($car);
+
+        // Delete images from storage
+        foreach ($car->images as $image) {
+            Storage::disk('public')->delete($image->path);
+        }
+
+        $car->delete();
+
+        return redirect()->route('cars.my-listings')
+            ->with('success', 'Your car listing has been deleted!');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helper Methods
+    |--------------------------------------------------------------------------
+    */
+
+    protected function authorizeCarOwner(Car $car): void
+    {
+        if ($car->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
+    protected function validateCarRequest(Request $request, ?Car $car = null): array
+    {
+        return $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|min:50',
+            'price' => 'required|numeric|min:0',
+            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+            'make' => 'required|string|max:100',
+            'model' => 'required|string|max:100',
+            'category_id' => 'required|exists:categories,id',
+            'condition' => 'required|in:new,used,certified',
+            'transmission' => 'required|in:automatic,manual,cvt,semi-automatic',
+            'fuel_type' => 'required|in:petrol,diesel,electric,hybrid,cng,lpg',
+            'mileage' => 'nullable|integer|min:0',
+            'body_type' => 'nullable|string|max:50',
+            'exterior_color' => 'nullable|string|max:50',
+            'whatsapp_number' => 'required|string|max:20',
+            'phone_number' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+    }
+}
