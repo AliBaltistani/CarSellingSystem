@@ -29,6 +29,66 @@
                             class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     </div>
 
+                    <!-- Location - Live Search -->
+                    <div class="mb-6" x-data="locationFilter()" @click.away="open = false">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Location</label>
+                        <input type="hidden" name="latitude" x-ref="latInput" x-model="selectedLat">
+                        <input type="hidden" name="longitude" x-ref="lonInput" x-model="selectedLon">
+                        <input type="hidden" name="city" x-ref="cityInput" x-model="selectedCity">
+                        <div class="relative">
+                            <div class="flex items-center border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-amber-500 bg-white">
+                                <svg class="w-5 h-5 text-slate-400 ml-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <input type="text" x-model="query" 
+                                    @focus="open = true" 
+                                    @input.debounce.300ms="searchLocations()"
+                                    placeholder="Search location..."
+                                    class="flex-1 px-3 py-2 border-0 bg-transparent text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 text-sm">
+                                <button type="button" x-show="query" @click="clearLocation()" class="px-2 text-slate-400 hover:text-slate-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Location Dropdown -->
+                            <div x-show="open" x-transition
+                                class="absolute top-full left-0 right-0 bg-white shadow-lg border border-slate-200 rounded-lg mt-1 z-50 max-h-64 overflow-hidden">
+                                <!-- Use Current Location -->
+                                <button type="button" @click="getCurrentLocation()" 
+                                    class="w-full flex items-center px-4 py-3 hover:bg-blue-50 text-left border-b border-slate-100">
+                                    <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-slate-700 font-medium text-sm" x-text="gettingLocation ? 'Getting location...' : 'Use current location'"></span>
+                                </button>
+                                
+                                <!-- Search Results -->
+                                <div class="max-h-48 overflow-y-auto">
+                                    <template x-for="loc in results" :key="loc.display_name || loc.id">
+                                        <button type="button" @click="selectLocation(loc)"
+                                            class="w-full flex items-center px-4 py-3 hover:bg-slate-50 text-left">
+                                            <svg class="w-4 h-4 text-slate-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                            </svg>
+                                            <span class="text-sm text-slate-700" x-text="loc.city ? (loc.city + ', ' + (loc.country || '')) : loc.display_name"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                                
+                                <!-- Loading/Empty State -->
+                                <div x-show="searching" class="px-4 py-3 text-sm text-slate-500 text-center">
+                                    Searching...
+                                </div>
+                                <div x-show="query.length >= 2 && results.length === 0 && !searching" class="px-4 py-3 text-sm text-slate-500 text-center">
+                                    No locations found
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Make - Searchable -->
                     <div class="mb-6" x-data="{ open: false, search: '', selected: '{{ request('make') }}' }" @click.away="open = false">
                         <label class="block text-sm font-medium text-slate-700 mb-2">Make</label>
@@ -329,6 +389,134 @@
             '{{ $option->value }}': '{{ $option->label }}',
             @endforeach
         };
+        
+        // Location Filter Component
+        function locationFilter() {
+            return {
+                open: false,
+                query: '',
+                results: [],
+                searching: false,
+                gettingLocation: false,
+                selectedLat: '{{ request('latitude', '') }}',
+                selectedLon: '{{ request('longitude', '') }}',
+                selectedCity: '{{ request('city', '') }}',
+                
+                init() {
+                    // Initialize with saved location from URL or localStorage
+                    if (this.selectedCity) {
+                        this.query = this.selectedCity;
+                    } else if (this.selectedLat && this.selectedLon) {
+                        // Have lat/lon from URL but no city - reverse geocode to get city name
+                        this.reverseGeocode(this.selectedLat, this.selectedLon);
+                    } else if (localStorage.getItem('selectedCity')) {
+                        this.selectedCity = localStorage.getItem('selectedCity');
+                        this.selectedLat = localStorage.getItem('selectedLat') || '';
+                        this.selectedLon = localStorage.getItem('selectedLon') || '';
+                        this.query = this.selectedCity;
+                    }
+                },
+                
+                async reverseGeocode(lat, lon) {
+                    try {
+                        const response = await fetch(`/api/locations/reverse?lat=${lat}&lon=${lon}`);
+                        const data = await response.json();
+                        if (data.city) {
+                            this.selectedCity = data.city;
+                            this.query = data.city;
+                        } else if (data.display_name) {
+                            const city = data.display_name.split(',')[0].trim();
+                            this.selectedCity = city;
+                            this.query = city;
+                        }
+                    } catch (error) {
+                        console.error('Reverse geocoding error:', error);
+                    }
+                },
+                
+                async searchLocations() {
+                    if (this.query.length < 2) {
+                        this.results = [];
+                        return;
+                    }
+                    
+                    this.searching = true;
+                    try {
+                        const response = await fetch(`/api/locations/search?q=${encodeURIComponent(this.query)}`);
+                        this.results = await response.json();
+                    } catch (error) {
+                        console.error('Location search error:', error);
+                        this.results = [];
+                    }
+                    this.searching = false;
+                },
+                
+                selectLocation(loc) {
+                    const displayName = loc.city ? `${loc.city}, ${loc.country || ''}` : loc.name || loc.display_name;
+                    this.selectedCity = loc.city || (displayName.split(',')[0] || '').trim();
+                    this.query = this.selectedCity;
+                    this.selectedLat = loc.lat || '';
+                    this.selectedLon = loc.lon || '';
+                    this.open = false;
+                    this.results = [];
+                    
+                    // Save to localStorage
+                    localStorage.setItem('selectedCity', this.selectedCity);
+                    localStorage.setItem('selectedLat', this.selectedLat);
+                    localStorage.setItem('selectedLon', this.selectedLon);
+                },
+                
+                clearLocation() {
+                    this.query = '';
+                    this.selectedCity = '';
+                    this.selectedLat = '';
+                    this.selectedLon = '';
+                    this.results = [];
+                    localStorage.removeItem('selectedCity');
+                    localStorage.removeItem('selectedLat');
+                    localStorage.removeItem('selectedLon');
+                },
+                
+                async getCurrentLocation() {
+                    if (!navigator.geolocation) {
+                        alert('Geolocation is not supported by your browser');
+                        return;
+                    }
+                    
+                    this.gettingLocation = true;
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const { latitude, longitude } = position.coords;
+                            
+                            try {
+                                const response = await fetch(`/api/locations/reverse?lat=${latitude}&lon=${longitude}`);
+                                const data = await response.json();
+                                
+                                if (data.city || data.display_name) {
+                                    this.selectLocation({
+                                        city: data.city,
+                                        country: data.country,
+                                        display_name: data.display_name,
+                                        lat: latitude,
+                                        lon: longitude
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('Reverse geocoding error:', error);
+                            }
+                            
+                            this.gettingLocation = false;
+                        },
+                        (error) => {
+                            console.error('Geolocation error:', error);
+                            this.gettingLocation = false;
+                            alert('Unable to get your location. Please enable location services.');
+                        }
+                    );
+                }
+            };
+        }
     </script>
     @endpush
 </x-layouts.public>

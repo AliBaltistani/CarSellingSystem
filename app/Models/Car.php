@@ -209,16 +209,32 @@ class Car extends Model
 
     public function scopeNearby(Builder $query, float $latitude, float $longitude, int $radiusKm = 50): Builder
     {
+        // Calculate distance, but don't exclude cars without coordinates
+        // Cars without coordinates get a very high distance so they appear after nearby cars
         return $query->selectRaw("
             *,
-            (6371 * acos(
-                cos(radians(?)) * cos(radians(latitude)) * 
-                cos(radians(longitude) - radians(?)) + 
-                sin(radians(?)) * sin(radians(latitude))
-            )) AS distance
+            CASE 
+                WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * sin(radians(latitude))
+                    ))
+                ELSE 99999
+            END AS distance
         ", [$latitude, $longitude, $latitude])
-        ->having('distance', '<=', $radiusKm)
-        ->orderBy('distance');
+        ->orderByRaw("
+            CASE 
+                WHEN latitude IS NOT NULL AND longitude IS NOT NULL 
+                    AND (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * sin(radians(latitude))
+                    )) <= ? THEN 0
+                ELSE 1
+            END,
+            distance ASC
+        ", [$latitude, $longitude, $latitude, $radiusKm]);
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder
