@@ -61,9 +61,9 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
                         <select name="condition" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                            <option value="new" {{ old('condition', $car->condition) == 'new' ? 'selected' : '' }}>New</option>
-                            <option value="used" {{ old('condition', $car->condition) == 'used' ? 'selected' : '' }}>Used</option>
-                            <option value="certified" {{ old('condition', $car->condition) == 'certified' ? 'selected' : '' }}>Certified Pre-Owned</option>
+                            @foreach($dropdownOptions['conditions'] ?? [] as $option)
+                                <option value="{{ $option->value }}" {{ old('condition', $car->condition) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -83,33 +83,42 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Transmission *</label>
                         <select name="transmission" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="automatic" {{ old('transmission', $car->transmission) == 'automatic' ? 'selected' : '' }}>Automatic</option>
-                            <option value="manual" {{ old('transmission', $car->transmission) == 'manual' ? 'selected' : '' }}>Manual</option>
-                            <option value="cvt" {{ old('transmission', $car->transmission) == 'cvt' ? 'selected' : '' }}>CVT</option>
-                            <option value="semi-automatic" {{ old('transmission', $car->transmission) == 'semi-automatic' ? 'selected' : '' }}>Semi-Automatic</option>
+                            @foreach($dropdownOptions['transmissions'] ?? [] as $option)
+                                <option value="{{ $option->value }}" {{ old('transmission', $car->transmission) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                            @endforeach
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Fuel Type *</label>
                         <select name="fuel_type" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="petrol" {{ old('fuel_type', $car->fuel_type) == 'petrol' ? 'selected' : '' }}>Petrol</option>
-                            <option value="diesel" {{ old('fuel_type', $car->fuel_type) == 'diesel' ? 'selected' : '' }}>Diesel</option>
-                            <option value="electric" {{ old('fuel_type', $car->fuel_type) == 'electric' ? 'selected' : '' }}>Electric</option>
-                            <option value="hybrid" {{ old('fuel_type', $car->fuel_type) == 'hybrid' ? 'selected' : '' }}>Hybrid</option>
+                            @foreach($dropdownOptions['fuelTypes'] ?? [] as $option)
+                                <option value="{{ $option->value }}" {{ old('fuel_type', $car->fuel_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                            @endforeach
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Body Type</label>
-                        <input type="text" name="body_type" value="{{ old('body_type', $car->body_type) }}"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                        <select name="body_type" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            <option value="">Select</option>
+                            @foreach($dropdownOptions['bodyTypes'] ?? [] as $option)
+                                <option value="{{ $option->value }}" {{ old('body_type', $car->body_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Exterior Color</label>
-                        <input type="text" name="exterior_color" value="{{ old('exterior_color', $car->exterior_color) }}"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                        <select name="exterior_color" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            <option value="">Select</option>
+                            @foreach($dropdownOptions['exteriorColors'] ?? [] as $option)
+                                <option value="{{ $option->value }}" {{ old('exterior_color', $car->exterior_color) == $option->value ? 'selected' : '' }}
+                                    @if($option->color) style="background: {{ $option->color }}15;" @endif>
+                                    {{ $option->label }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>

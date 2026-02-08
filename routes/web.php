@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\FinancingPartnerController as AdminFinancingPartn
 use App\Http\Controllers\Admin\OfferController as AdminOfferController;
 use App\Http\Controllers\Admin\AttributeGroupController as AdminAttributeGroupController;
 use App\Http\Controllers\Admin\AttributeController as AdminAttributeController;
+use App\Http\Controllers\Admin\DropdownOptionController as AdminDropdownOptionController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Route;
@@ -200,6 +201,11 @@ Route::prefix('admin')
         Route::resource('pages', \App\Http\Controllers\Admin\AdminPageController::class)->except('show');
         Route::post('pages/{page}/toggle-active', [\App\Http\Controllers\Admin\AdminPageController::class, 'toggleActive'])
             ->name('pages.toggle-active');
+
+        // Dropdown Options Management
+        Route::resource('dropdown-options', AdminDropdownOptionController::class)->except('show');
+        Route::post('dropdown-options/{dropdownOption}/toggle-active', [AdminDropdownOptionController::class, 'toggleActive'])
+            ->name('dropdown-options.toggle-active');
     });
 
 /*

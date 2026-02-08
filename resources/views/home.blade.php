@@ -104,11 +104,11 @@
                                     </button>
                                     @foreach($makes ?? [] as $make)
                                     <button type="button" 
-                                            x-show="!search || '{{ strtolower($make) }}'.includes(search.toLowerCase())"
-                                            @click="selectedMake = '{{ $make }}'; search = ''; open = false; searchCars()" 
+                                            x-show="!search || '{{ strtolower($make->label) }}'.includes(search.toLowerCase())"
+                                            @click="selectedMake = '{{ $make->value }}'; search = ''; open = false; searchCars()" 
                                             class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
-                                            :class="selectedMake === '{{ $make }}' ? 'bg-teal-50 text-teal-700' : ''">
-                                        {{ $make }}
+                                            :class="selectedMake === '{{ $make->value }}' ? 'bg-teal-50 text-teal-700' : ''">
+                                        {{ $make->label }}
                                     </button>
                                     @endforeach
                                 </div>
@@ -137,7 +137,7 @@
                                             class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
                                         All Years
                                     </button>
-                                    @for($year = date('Y') + 1; $year >= 1990; $year--)
+                                    @foreach($years ?? [] as $year)
                                     <button type="button" 
                                             x-show="!search || '{{ $year }}'.includes(search)"
                                             @click="selectedYear = '{{ $year }}'; search = ''; open = false; searchCars()" 
@@ -145,18 +145,18 @@
                                             :class="selectedYear == '{{ $year }}' ? 'bg-teal-50 text-teal-700' : ''">
                                         {{ $year }}
                                     </button>
-                                    @endfor
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
 
                         <!-- Condition Dropdown - Searchable -->
                         <div class="flex-1 relative" 
-                             x-data="{ open: false, search: '', conditions: [{ value: 'new', label: 'New' }, { value: 'used', label: 'Used' }, { value: 'certified', label: 'Certified Pre-Owned' }] }"
+                             x-data="{ open: false, search: '' }"
                              @click.away="open = false">
                             <button type="button" @click="open = !open" 
                                 class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
-                                <span x-text="selectedCondition ? conditions.find(c => c.value === selectedCondition)?.label : 'Condition'" :class="selectedCondition ? 'text-slate-700' : 'text-slate-500'"></span>
+                                <span x-text="conditionLabels[selectedCondition] || 'Condition'" :class="selectedCondition ? 'text-slate-700' : 'text-slate-500'"></span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
@@ -172,15 +172,15 @@
                                             class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
                                         All Conditions
                                     </button>
-                                    <template x-for="cond in conditions" :key="cond.value">
-                                        <button type="button" 
-                                                x-show="!search || cond.label.toLowerCase().includes(search.toLowerCase())"
-                                                @click="selectedCondition = cond.value; search = ''; open = false; searchCars()" 
-                                                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
-                                                :class="selectedCondition === cond.value ? 'bg-teal-50 text-teal-700' : ''"
-                                                x-text="cond.label">
-                                        </button>
-                                    </template>
+                                    @foreach($conditions ?? [] as $condition)
+                                    <button type="button" 
+                                            x-show="!search || '{{ strtolower($condition->label) }}'.includes(search.toLowerCase())"
+                                            @click="selectedCondition = '{{ $condition->value }}'; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+                                            :class="selectedCondition === '{{ $condition->value }}' ? 'bg-teal-50 text-teal-700' : ''">
+                                        {{ $condition->label }}
+                                    </button>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
@@ -626,6 +626,13 @@
                 selectedYear: '',
                 selectedCondition: '',
                 selectedCarId: null,
+                
+                // Condition labels mapping for display
+                conditionLabels: {
+                    @foreach($conditions ?? [] as $condition)
+                    '{{ $condition->value }}': '{{ $condition->label }}',
+                    @endforeach
+                },
                 
                 async searchCars() {
                     this.searching = true;

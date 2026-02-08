@@ -9,6 +9,7 @@ use App\Models\Banner;
 use App\Models\Testimonial;
 use App\Models\FinancingPartner;
 use App\Models\Offer;
+use App\Models\DropdownOption;
 use App\Services\SeoService;
 
 class HomeController extends Controller
@@ -42,14 +43,10 @@ class HomeController extends Controller
         // Fetch active banners for the slider
         $banners = Banner::getDisplayBanners();
 
-        // Get unique car makes for the search dropdown
-        $makes = Car::published()
-            ->available()
-            ->distinct()
-            ->pluck('make')
-            ->filter()
-            ->sort()
-            ->values();
+        // Get dropdown options from admin-managed database
+        $makes = DropdownOption::byType(DropdownOption::TYPE_MAKE);
+        $conditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION);
+        $years = range(date('Y') + 1, 1990); // Generate years dynamically
 
         // Fetch testimonials
         $testimonials = Testimonial::getDisplayTestimonials(6);
@@ -78,6 +75,8 @@ class HomeController extends Controller
             'latestCars',
             'banners',
             'makes',
+            'conditions',
+            'years',
             'testimonials',
             'financingPartners',
             'offers',

@@ -7,6 +7,7 @@ use App\Models\Car;
 use App\Models\Category;
 use App\Models\CarImage;
 use App\Models\Setting;
+use App\Models\DropdownOption;
 use App\Services\SeoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -51,12 +52,12 @@ class CarController extends Controller
         $cars = $query->paginate((int) Setting::get('cars_per_page', 12));
         $categories = Category::active()->orderBy('order')->get();
 
-        // Get filter options
-        $makes = Car::published()->available()
-            ->distinct()
-            ->pluck('make')
-            ->sort()
-            ->values();
+        // Get filter options from admin-managed dropdown options
+        $makes = DropdownOption::byType(DropdownOption::TYPE_MAKE);
+        $conditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION);
+        $transmissions = DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION);
+        $fuelTypes = DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE);
+        $bodyTypes = DropdownOption::byType(DropdownOption::TYPE_BODY_TYPE);
 
         // Get filterable dynamic attributes with options
         $filterableAttributes = Attribute::active()
@@ -68,7 +69,10 @@ class CarController extends Controller
 
         $seo = $this->seoService->generateListingMeta($request->all());
 
-        return view('cars.index', compact('cars', 'categories', 'makes', 'filterableAttributes', 'seo'));
+        return view('cars.index', compact(
+            'cars', 'categories', 'makes', 'conditions', 'transmissions',
+            'fuelTypes', 'bodyTypes', 'filterableAttributes', 'seo'
+        ));
     }
 
     public function show(Car $car)
@@ -111,11 +115,36 @@ class CarController extends Controller
         // Apply filters
         $query->filter($request->except('category'));
         
+        // Apply dynamic attribute filters
+        $attributeFilters = $request->input('attr', []);
+        if (!empty($attributeFilters)) {
+            $query->filterByAttributes($attributeFilters);
+        }
+        
         $cars = $query->latest()->paginate((int) Setting::get('cars_per_page', 12));
+        $categories = Category::active()->orderBy('order')->get();
+
+        // Get filter options from admin-managed dropdown options
+        $makes = DropdownOption::byType(DropdownOption::TYPE_MAKE);
+        $conditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION);
+        $transmissions = DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION);
+        $fuelTypes = DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE);
+        $bodyTypes = DropdownOption::byType(DropdownOption::TYPE_BODY_TYPE);
+
+        // Get filterable dynamic attributes with options
+        $filterableAttributes = Attribute::active()
+            ->filterable()
+            ->with(['options', 'group'])
+            ->ordered()
+            ->get()
+            ->groupBy(fn($attr) => $attr->group?->name ?? 'Other');
 
         $seo = $this->seoService->generateListingMeta(['category' => $category->name]);
 
-        return view('cars.index', compact('cars', 'category', 'seo'));
+        return view('cars.index', compact(
+            'cars', 'categories', 'category', 'makes', 'conditions', 'transmissions',
+            'fuelTypes', 'bodyTypes', 'filterableAttributes', 'seo'
+        ));
     }
 
     public function search(Request $request)
@@ -162,7 +191,9 @@ class CarController extends Controller
     public function create()
     {
         $categories = Category::active()->orderBy('name')->get();
-        return view('cars.create', compact('categories'));
+        $dropdownOptions = $this->getDropdownOptions();
+        
+        return view('cars.create', compact('categories', 'dropdownOptions'));
     }
 
     public function store(Request $request)
@@ -196,9 +227,10 @@ class CarController extends Controller
         $this->authorizeCarOwner($car);
 
         $categories = Category::active()->orderBy('name')->get();
+        $dropdownOptions = $this->getDropdownOptions();
         $car->load('images');
 
-        return view('cars.edit', compact('car', 'categories'));
+        return view('cars.edit', compact('car', 'categories', 'dropdownOptions'));
     }
 
     public function update(Request $request, Car $car)
@@ -254,8 +286,33 @@ class CarController extends Controller
         }
     }
 
+    /**
+     * Get all dropdown options for car forms
+     */
+    protected function getDropdownOptions(): array
+    {
+        return [
+            'makes' => DropdownOption::byType(DropdownOption::TYPE_MAKE),
+            'conditions' => DropdownOption::byType(DropdownOption::TYPE_CONDITION),
+            'transmissions' => DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION),
+            'fuelTypes' => DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE),
+            'bodyTypes' => DropdownOption::byType(DropdownOption::TYPE_BODY_TYPE),
+            'drivetrains' => DropdownOption::byType(DropdownOption::TYPE_DRIVETRAIN),
+            'exteriorColors' => DropdownOption::byType(DropdownOption::TYPE_EXTERIOR_COLOR),
+            'interiorColors' => DropdownOption::byType(DropdownOption::TYPE_INTERIOR_COLOR),
+            'doors' => DropdownOption::byType(DropdownOption::TYPE_DOORS),
+            'seats' => DropdownOption::byType(DropdownOption::TYPE_SEATS),
+            'cylinders' => DropdownOption::byType(DropdownOption::TYPE_CYLINDERS),
+        ];
+    }
+
     protected function validateCarRequest(Request $request, ?Car $car = null): array
     {
+        // Get valid values from database
+        $validConditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION)->pluck('value')->toArray();
+        $validTransmissions = DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION)->pluck('value')->toArray();
+        $validFuelTypes = DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE)->pluck('value')->toArray();
+
         return $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:50',
@@ -264,9 +321,9 @@ class CarController extends Controller
             'make' => 'required|string|max:100',
             'model' => 'required|string|max:100',
             'category_id' => 'required|exists:categories,id',
-            'condition' => 'required|in:new,used,certified',
-            'transmission' => 'required|in:automatic,manual,cvt,semi-automatic',
-            'fuel_type' => 'required|in:petrol,diesel,electric,hybrid,cng,lpg',
+            'condition' => 'required|in:' . implode(',', $validConditions),
+            'transmission' => 'required|in:' . implode(',', $validTransmissions),
+            'fuel_type' => 'required|in:' . implode(',', $validFuelTypes),
             'mileage' => 'nullable|integer|min:0',
             'body_type' => 'nullable|string|max:50',
             'exterior_color' => 'nullable|string|max:50',
@@ -278,3 +335,4 @@ class CarController extends Controller
         ]);
     }
 }
+

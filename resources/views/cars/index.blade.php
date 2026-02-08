@@ -19,7 +19,7 @@
         <div class="lg:grid lg:grid-cols-4 lg:gap-8">
             <!-- Filters Sidebar -->
             <aside class="lg:col-span-1">
-                <form action="{{ route('cars.index') }}" method="GET" class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                <form action="{{ isset($category) ? route('cars.category', $category) : route('cars.index') }}" method="GET" class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
                     <h2 class="text-lg font-semibold text-slate-900 mb-4">Filters</h2>
 
                     <!-- Search -->
@@ -29,15 +29,36 @@
                             class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     </div>
 
-                    <!-- Make -->
-                    <div class="mb-6">
+                    <!-- Make - Searchable -->
+                    <div class="mb-6" x-data="{ open: false, search: '', selected: '{{ request('make') }}' }" @click.away="open = false">
                         <label class="block text-sm font-medium text-slate-700 mb-2">Make</label>
-                        <select name="make" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                            <option value="">All Makes</option>
-                            @foreach($makes ?? [] as $make)
-                                <option value="{{ $make }}" {{ request('make') == $make ? 'selected' : '' }}>{{ $make }}</option>
-                            @endforeach
-                        </select>
+                        <input type="hidden" name="make" :value="selected">
+                        <div class="relative">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-left flex items-center justify-between bg-white">
+                                <span x-text="selected || 'All Makes'" :class="selected ? 'text-slate-900' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition class="absolute top-full left-0 right-0 bg-white shadow-lg border border-slate-200 rounded-lg mt-1 z-50 max-h-64 overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search makes..." 
+                                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selected = ''; open = false" class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">All Makes</button>
+                                    @foreach($makes ?? [] as $make)
+                                    <button type="button" x-show="!search || '{{ strtolower($make->label) }}'.includes(search.toLowerCase())"
+                                        @click="selected = '{{ $make->value }}'; open = false" 
+                                        class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                        :class="selected === '{{ $make->value }}' ? 'bg-amber-50 text-amber-700' : 'text-slate-700'">
+                                        {{ $make->label }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Price Range -->
@@ -62,38 +83,100 @@
                         </div>
                     </div>
 
-                    <!-- Condition -->
-                    <div class="mb-6">
+                    <!-- Condition - Searchable -->
+                    <div class="mb-6" x-data="{ open: false, search: '', selected: '{{ request('condition') }}' }" @click.away="open = false">
                         <label class="block text-sm font-medium text-slate-700 mb-2">Condition</label>
-                        <select name="condition" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="">All Conditions</option>
-                            <option value="new" {{ request('condition') == 'new' ? 'selected' : '' }}>New</option>
-                            <option value="used" {{ request('condition') == 'used' ? 'selected' : '' }}>Used</option>
-                            <option value="certified" {{ request('condition') == 'certified' ? 'selected' : '' }}>Certified Pre-Owned</option>
-                        </select>
+                        <input type="hidden" name="condition" :value="selected">
+                        <div class="relative">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-left flex items-center justify-between bg-white">
+                                <span x-text="selected ? conditionLabels[selected] : 'All Conditions'" :class="selected ? 'text-slate-900' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition class="absolute top-full left-0 right-0 bg-white shadow-lg border border-slate-200 rounded-lg mt-1 z-50 max-h-64 overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search conditions..." 
+                                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selected = ''; open = false" class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">All Conditions</button>
+                                    @foreach($conditions ?? [] as $option)
+                                    <button type="button" x-show="!search || '{{ strtolower($option->label) }}'.includes(search.toLowerCase())"
+                                        @click="selected = '{{ $option->value }}'; open = false" 
+                                        class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                        :class="selected === '{{ $option->value }}' ? 'bg-amber-50 text-amber-700' : 'text-slate-700'">
+                                        {{ $option->label }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Transmission -->
-                    <div class="mb-6">
+                    <!-- Transmission - Searchable -->
+                    <div class="mb-6" x-data="{ open: false, search: '', selected: '{{ request('transmission') }}' }" @click.away="open = false">
                         <label class="block text-sm font-medium text-slate-700 mb-2">Transmission</label>
-                        <select name="transmission" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="">All Types</option>
-                            <option value="automatic" {{ request('transmission') == 'automatic' ? 'selected' : '' }}>Automatic</option>
-                            <option value="manual" {{ request('transmission') == 'manual' ? 'selected' : '' }}>Manual</option>
-                            <option value="cvt" {{ request('transmission') == 'cvt' ? 'selected' : '' }}>CVT</option>
-                        </select>
+                        <input type="hidden" name="transmission" :value="selected">
+                        <div class="relative">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-left flex items-center justify-between bg-white">
+                                <span x-text="selected ? transmissionLabels[selected] : 'All Types'" :class="selected ? 'text-slate-900' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition class="absolute top-full left-0 right-0 bg-white shadow-lg border border-slate-200 rounded-lg mt-1 z-50 max-h-64 overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search transmissions..." 
+                                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selected = ''; open = false" class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">All Types</button>
+                                    @foreach($transmissions ?? [] as $option)
+                                    <button type="button" x-show="!search || '{{ strtolower($option->label) }}'.includes(search.toLowerCase())"
+                                        @click="selected = '{{ $option->value }}'; open = false" 
+                                        class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                        :class="selected === '{{ $option->value }}' ? 'bg-amber-50 text-amber-700' : 'text-slate-700'">
+                                        {{ $option->label }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Fuel Type -->
-                    <div class="mb-6">
+                    <!-- Fuel Type - Searchable -->
+                    <div class="mb-6" x-data="{ open: false, search: '', selected: '{{ request('fuel_type') }}' }" @click.away="open = false">
                         <label class="block text-sm font-medium text-slate-700 mb-2">Fuel Type</label>
-                        <select name="fuel_type" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="">All Fuel Types</option>
-                            <option value="petrol" {{ request('fuel_type') == 'petrol' ? 'selected' : '' }}>Petrol</option>
-                            <option value="diesel" {{ request('fuel_type') == 'diesel' ? 'selected' : '' }}>Diesel</option>
-                            <option value="electric" {{ request('fuel_type') == 'electric' ? 'selected' : '' }}>Electric</option>
-                            <option value="hybrid" {{ request('fuel_type') == 'hybrid' ? 'selected' : '' }}>Hybrid</option>
-                        </select>
+                        <input type="hidden" name="fuel_type" :value="selected">
+                        <div class="relative">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-left flex items-center justify-between bg-white">
+                                <span x-text="selected ? fuelTypeLabels[selected] : 'All Fuel Types'" :class="selected ? 'text-slate-900' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition class="absolute top-full left-0 right-0 bg-white shadow-lg border border-slate-200 rounded-lg mt-1 z-50 max-h-64 overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search fuel types..." 
+                                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selected = ''; open = false" class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">All Fuel Types</button>
+                                    @foreach($fuelTypes ?? [] as $option)
+                                    <button type="button" x-show="!search || '{{ strtolower($option->label) }}'.includes(search.toLowerCase())"
+                                        @click="selected = '{{ $option->value }}'; open = false" 
+                                        class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                        :class="selected === '{{ $option->value }}' ? 'bg-amber-50 text-amber-700' : 'text-slate-700'">
+                                        {{ $option->label }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Dynamic Attribute Filters -->
@@ -190,7 +273,7 @@
                         <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all">
                             Apply Filters
                         </button>
-                        <a href="{{ route('cars.index') }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors">
+                        <a href="{{ isset($category) ? route('cars.category', $category) : route('cars.index') }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors">
                             Clear
                         </a>
                     </div>
@@ -217,7 +300,7 @@
                         </svg>
                         <h3 class="mt-4 text-xl font-semibold text-slate-900">No cars found</h3>
                         <p class="mt-2 text-slate-600">Try adjusting your filters or search criteria</p>
-                        <a href="{{ route('cars.index') }}" class="inline-block mt-6 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors">
+                        <a href="{{ isset($category) ? route('cars.category', $category) : route('cars.index') }}" class="inline-block mt-6 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors">
                             Clear All Filters
                         </a>
                     </div>
@@ -225,4 +308,27 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        // Label mappings for searchable dropdowns
+        const conditionLabels = {
+            @foreach($conditions ?? [] as $option)
+            '{{ $option->value }}': '{{ $option->label }}',
+            @endforeach
+        };
+        
+        const transmissionLabels = {
+            @foreach($transmissions ?? [] as $option)
+            '{{ $option->value }}': '{{ $option->label }}',
+            @endforeach
+        };
+        
+        const fuelTypeLabels = {
+            @foreach($fuelTypes ?? [] as $option)
+            '{{ $option->value }}': '{{ $option->label }}',
+            @endforeach
+        };
+    </script>
+    @endpush
 </x-layouts.public>
