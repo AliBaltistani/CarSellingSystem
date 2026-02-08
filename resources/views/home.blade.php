@@ -80,46 +80,109 @@
                 <div class="bg-white rounded-lg shadow-2xl ">
                     <!-- Top Row: Filter Dropdowns (Make | Year | Condition) -->
                     <div class="flex flex-col md:flex-row bg-slate-50">
-                        <!-- Make Dropdown -->
-                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200">
-                            <select x-model="selectedMake" @change="searchCars()"
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 appearance-none cursor-pointer focus:outline-none focus:ring-0 text-sm">
-                                <option value="">Select Make</option>
-                                @foreach($makes ?? [] as $make)
-                                    <option value="{{ $make }}">{{ $make }}</option>
-                                @endforeach
-                            </select>
-                            <svg class="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                        <!-- Make Dropdown - Searchable -->
+                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200" 
+                             x-data="{ open: false, search: '' }"
+                             @click.away="open = false">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
+                                <span x-text="selectedMake || 'Select Make'" :class="selectedMake ? 'text-slate-700' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition 
+                                 class="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 z-[100] rounded-b-lg overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search make..." 
+                                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selectedMake = ''; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
+                                        All Makes
+                                    </button>
+                                    @foreach($makes ?? [] as $make)
+                                    <button type="button" 
+                                            x-show="!search || '{{ strtolower($make) }}'.includes(search.toLowerCase())"
+                                            @click="selectedMake = '{{ $make }}'; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+                                            :class="selectedMake === '{{ $make }}' ? 'bg-teal-50 text-teal-700' : ''">
+                                        {{ $make }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Year Dropdown -->
-                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200">
-                            <select x-model="selectedYear" @change="searchCars()"
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 appearance-none cursor-pointer focus:outline-none focus:ring-0 text-sm">
-                                <option value="">Select Year</option>
-                                @for($year = date('Y') + 1; $year >= 1990; $year--)
-                                    <option value="{{ $year }}">{{ $year }}</option>
-                                @endfor
-                            </select>
-                            <svg class="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                        <!-- Year Dropdown - Searchable -->
+                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200" 
+                             x-data="{ open: false, search: '' }"
+                             @click.away="open = false">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
+                                <span x-text="selectedYear || 'Select Year'" :class="selectedYear ? 'text-slate-700' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition 
+                                 class="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 z-[100] rounded-b-lg overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search year..." 
+                                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selectedYear = ''; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
+                                        All Years
+                                    </button>
+                                    @for($year = date('Y') + 1; $year >= 1990; $year--)
+                                    <button type="button" 
+                                            x-show="!search || '{{ $year }}'.includes(search)"
+                                            @click="selectedYear = '{{ $year }}'; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+                                            :class="selectedYear == '{{ $year }}' ? 'bg-teal-50 text-teal-700' : ''">
+                                        {{ $year }}
+                                    </button>
+                                    @endfor
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Condition Dropdown -->
-                        <div class="flex-1 relative">
-                            <select x-model="selectedCondition" @change="searchCars()"
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 appearance-none cursor-pointer focus:outline-none focus:ring-0 text-sm">
-                                <option value="">Condition</option>
-                                <option value="new">New</option>
-                                <option value="used">Used</option>
-                                <option value="certified">Certified Pre-Owned</option>
-                            </select>
-                            <svg class="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                        <!-- Condition Dropdown - Searchable -->
+                        <div class="flex-1 relative" 
+                             x-data="{ open: false, search: '', conditions: [{ value: 'new', label: 'New' }, { value: 'used', label: 'Used' }, { value: 'certified', label: 'Certified Pre-Owned' }] }"
+                             @click.away="open = false">
+                            <button type="button" @click="open = !open" 
+                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
+                                <span x-text="selectedCondition ? conditions.find(c => c.value === selectedCondition)?.label : 'Condition'" :class="selectedCondition ? 'text-slate-700' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition 
+                                 class="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 z-[100] rounded-b-lg overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search condition..." 
+                                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selectedCondition = ''; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
+                                        All Conditions
+                                    </button>
+                                    <template x-for="cond in conditions" :key="cond.value">
+                                        <button type="button" 
+                                                x-show="!search || cond.label.toLowerCase().includes(search.toLowerCase())"
+                                                @click="selectedCondition = cond.value; search = ''; open = false; searchCars()" 
+                                                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+                                                :class="selectedCondition === cond.value ? 'bg-teal-50 text-teal-700' : ''"
+                                                x-text="cond.label">
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -243,31 +306,7 @@
         </div>
     </section>
 
-    <!-- Categories Section -->
-    <section class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-slate-900">Browse by Category</h2>
-                <p class="mt-3 text-slate-600">Find your perfect match from our curated categories</p>
-            </div>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                @foreach($categories as $category)
-                    <a href="{{ route('cars.category', $category) }}" 
-                        class="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 hover:border-amber-200 text-center">
-                        <div class="w-14 h-14 mx-auto bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                            </svg>
-                        </div>
-                        <h3 class="font-semibold text-slate-900">{{ $category->name }}</h3>
-                        <p class="text-sm text-slate-500 mt-1">{{ $category->cars_count }} cars</p>
-                    </a>
-                @endforeach
-            </div>
-        </div>
-    </section>
+
 
     <!-- Featured Cars Section -->
     @if($featuredCars->count() > 0)

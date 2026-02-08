@@ -89,12 +89,19 @@
             <div class="bg-white rounded-2xl shadow-lg p-8">
                 <h2 class="text-2xl font-bold text-slate-900 mb-6">Send us a Message</h2>
                 
-                <form action="#" method="POST" class="space-y-6">
+                @if(session('success'))
+                    <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                <form action="{{ route('contact.submit') }}" method="POST" class="space-y-6">
                     @csrf
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Your Name *</label>
-                        <input type="text" id="name" name="name" required
-                            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        <input type="text" id="name" name="name" required value="{{ old('name') }}"
+                            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('name') border-red-500 @enderror">
+                        @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email Address *</label>

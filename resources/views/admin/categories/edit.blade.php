@@ -23,8 +23,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
-                <textarea name="description" rows="3"
-                    class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">{{ old('description', $category->description) }}</textarea>
+                <x-forms.rich-editor name="description" :value="$category->description" height="120px" />
             </div>
 
             <div>

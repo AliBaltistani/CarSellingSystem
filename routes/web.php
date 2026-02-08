@@ -43,6 +43,9 @@ Route::post('/cars/{car}/inquiry', [InquiryController::class, 'store'])->name('i
 // Dynamic Pages (must be after other routes to avoid conflicts)
 Route::get('/page/{slug}', [PageController::class, 'show'])->name('page.show');
 
+// Contact Form Submission
+Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'submit'])->name('contact.submit');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated User Routes

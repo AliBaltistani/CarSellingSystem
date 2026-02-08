@@ -14,6 +14,7 @@
             <thead class="bg-slate-50 border-b border-slate-100">
                 <tr>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Order</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Icon/Image</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Category</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Slug</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Cars</th>
@@ -25,6 +26,19 @@
                 @forelse($categories ?? [] as $category)
                     <tr class="hover:bg-slate-50">
                         <td class="px-6 py-4 text-slate-600">{{ $category->order }}</td>
+                        <td class="px-6 py-4">
+                            <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                                @if($category->image)
+                                    <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="w-8 h-8 object-contain rounded">
+                                @elseif($category->icon)
+                                    <span class="text-slate-500 text-sm font-mono">{{ Str::limit($category->icon, 10) }}</span>
+                                @else
+                                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                                    </svg>
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-6 py-4 font-medium text-slate-900">{{ $category->name }}</td>
                         <td class="px-6 py-4 text-slate-500 font-mono text-sm">{{ $category->slug }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ $category->cars_count ?? 0 }}</td>
@@ -46,7 +60,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">No categories found</td>
+                        <td colspan="7" class="px-6 py-12 text-center text-slate-500">No categories found</td>
                     </tr>
                 @endforelse
             </tbody>
