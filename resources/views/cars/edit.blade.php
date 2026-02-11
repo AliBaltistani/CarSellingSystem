@@ -1,6 +1,6 @@
 <x-layouts.public>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="carEditStepper()">
-
+    <style>[x-cloak] { display: none !important; }</style>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="carFormStepper()">
         <!-- Step Indicator -->
         <div class="mb-8">
             <div class="flex items-center justify-between relative">
@@ -58,93 +58,99 @@
             </div>
         @endif
 
-        <form action="{{ route('cars.update', $car) }}" method="POST" enctype="multipart/form-data" id="car-edit-form">
+        <form action="{{ route('cars.update', $car) }}" method="POST" enctype="multipart/form-data" id="car-form">
             @csrf
             @method('PUT')
 
             <!-- Step 1: Basic Information -->
             <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
-                    @php
-                        $currentMakeLabel = old('make', $car->make);
-                        $currentMakeId = null;
-                        if (!empty($dropdownOptions['makes'])) {
-                            foreach ($dropdownOptions['makes'] as $option) {
-                                if ($option->label === $currentMakeLabel) {
-                                    $currentMakeId = $option->id;
-                                    break;
-                                }
-                            }
-                        }
-                    @endphp
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="carMakeModel()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-2">Title *</label>
                             <input type="text" name="title" value="{{ old('title', $car->title) }}" required
+                                placeholder="e.g., 2023 BMW X5 M Sport - Low Mileage"
                                 class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('title') border-red-500 @enderror">
                             @error('title')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
-                            <select x-model="selectedMakeId" @change="fetchModels()" required
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                                <option value="">Select Make</option>
-                                @foreach($dropdownOptions['makes'] ?? [] as $option)
-                                    <option value="{{ $option->id }}" data-label="{{ $option->label }}" {{ (old('make') == $option->label || $currentMakeId == $option->id) ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
-                            <input type="hidden" name="make" :value="selectedMakeLabel">
-                        </div>
+                        <div x-data="carMakeModel()">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
+                                    <select x-model="selectedMakeId" @change="fetchModels()" required
+                                        class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                        <option value="">Select Make</option>
+                                        @foreach($dropdownOptions['makes'] ?? [] as $option)
+                                            <option value="{{ $option->id }}" data-label="{{ $option->label }}" {{ (old('make', $car->make) == $option->label) ? 'selected' : '' }}>{{ $option->label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="hidden" name="make" :value="selectedMakeLabel">
+                                </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
-                            <select name="model" required x-model="selectedModel" :disabled="!selectedMakeId"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400">
-                                <option value="">Select Model</option>
-                                <template x-for="model in models" :key="model.id">
-                                    <option :value="model.label" x-text="model.label"></option>
-                                </template>
-                            </select>
-                        </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
+                                    <select name="model" required x-model="selectedModel" :disabled="!selectedMakeId"
+                                        class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400">
+                                        <option value="">Select Model</option>
+                                        <template x-for="model in models" :key="model.id">
+                                            <option :value="model.label" :selected="model.label == selectedModel" x-text="model.label"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
-                            <select name="year" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                                <option value="">Select Year</option>
-                                @for($i = date('Y') + 1; $i >= 1900; $i--)
-                                    <option value="{{ $i }}" {{ old('year', $car->year) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
+                                <select name="year" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                    <option value="">Select Year</option>
+                                    @for($i = date('Y') + 1; $i >= 1900; $i--)
+                                        <option value="{{ $i }}" {{ old('year', $car->year) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Category *</label>
-                            <select name="category_id" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <select name="category_id" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('category_id') border-red-500 @enderror">
+                                <option value="">Select Category</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ old('category_id', $car->category_id) == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            @error('category_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Price (AED) *</label>
-                            <input type="number" name="price" value="{{ old('price', $car->price) }}" required
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <input type="number" name="price" value="{{ old('price', $car->price) }}" required min="0" step="1"
+                                placeholder="e.g., 150000"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('price') border-red-500 @enderror">
+                            @error('price')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
-                            <select name="condition" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <select name="condition" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                <option value="">Select</option>
                                 @foreach($dropdownOptions['conditions'] ?? [] as $option)
                                     <option value="{{ $option->value }}" {{ old('condition', $car->condition) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
                                 @endforeach
                             </select>
+                            @error('condition')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -153,91 +159,94 @@
             <!-- Step 2: Specifications -->
             <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Mileage (km)</label>
-                            <input type="number" name="mileage" value="{{ old('mileage', $car->mileage) }}"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Mileage (km)</label>
+                                <input type="number" name="mileage" value="{{ old('mileage', $car->mileage) }}" min="0"
+                                    placeholder="e.g., 50000"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Transmission *</label>
-                            <select name="transmission" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                @foreach($dropdownOptions['transmissions'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('transmission', $car->transmission) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Transmission *</label>
+                                <select name="transmission" required
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['transmissions'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('transmission', $car->transmission) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Fuel Type *</label>
-                            <select name="fuel_type" required
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="">Select</option>
-                                @foreach($dropdownOptions['fuel_types'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('fuel_type', $car->fuel_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Fuel Type *</label>
+                                <select name="fuel_type" required
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['fuel_types'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('fuel_type', $car->fuel_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Body Type</label>
-                            <select name="body_type"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="">Select</option>
-                                @foreach($dropdownOptions['body_types'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('body_type', $car->body_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Body Type</label>
+                                <select name="body_type"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['body_types'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('body_type', $car->body_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Exterior Color</label>
-                            <select name="exterior_color"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="">Select</option>
-                                @foreach($dropdownOptions['exterior_colors'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('exterior_color', $car->exterior_color) == $option->value ? 'selected' : '' }}
-                                        @if($option->color) style="background: {{ $option->color }}15;" @endif>
-                                        {{ $option->label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Exterior Color</label>
+                                <select name="exterior_color"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['exterior_colors'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('exterior_color', $car->exterior_color) == $option->value ? 'selected' : '' }}
+                                            @if($option->color) style="background: {{ $option->color }}15;" @endif>
+                                            {{ $option->label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Interior Color</label>
-                            <select name="interior_color"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="">Select</option>
-                                @foreach($dropdownOptions['interior_colors'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('interior_color', $car->interior_color) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Interior Color</label>
+                                <select name="interior_color"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['interior_colors'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('interior_color', $car->interior_color) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Doors</label>
-                            <select name="doors"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="">Select</option>
-                                @foreach($dropdownOptions['doors'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('doors', $car->doors) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Doors</label>
+                                <select name="doors"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['doors'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('doors', $car->doors) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Seats</label>
-                            <select name="seats"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="">Select</option>
-                                @foreach($dropdownOptions['seats'] ?? [] as $option)
-                                    <option value="{{ $option->value }}" {{ old('seats', $car->seats) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                @endforeach
-                            </select>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Seats</label>
+                                <select name="seats"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Select</option>
+                                    @foreach($dropdownOptions['seats'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('seats', $car->seats) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                    </div>
                 </div>
 
                 <!-- Dynamic Attributes Section -->
@@ -267,7 +276,10 @@
                         <label class="block text-sm font-medium text-slate-700 mb-2">Description * (min 50 characters)</label>
                         <textarea name="description" rows="8" required minlength="50"
                             placeholder="Describe your car in detail. Include history, features, condition, reason for selling, etc."
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">{{ old('description', $car->description) }}</textarea>
+                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('description') border-red-500 @enderror">{{ old('description', $car->description) }}</textarea>
+                        @error('description')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                         <p class="mt-2 text-xs text-slate-400">Tip: A detailed description helps attract more buyers. Mention the car's history, maintenance record, and any special features.</p>
                     </div>
                 </div>
@@ -280,12 +292,20 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number *</label>
                             <input type="text" name="whatsapp_number" value="{{ old('whatsapp_number', $car->whatsapp_number) }}" required
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                placeholder="e.g., +971501234567"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 @error('whatsapp_number') border-red-500 @enderror">
+                            @error('whatsapp_number')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
                             <input type="text" name="phone_number" value="{{ old('phone_number', $car->phone_number) }}"
+                                placeholder="e.g., +971501234567"
                                 class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                         </div>
+
 
                         <!-- Location Search -->
                         <div class="col-span-1 md:col-span-2 relative" x-data="locationSearch()">
@@ -333,6 +353,7 @@
 
             <!-- Step 5: Photos -->
             <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                
                 <!-- Current Images -->
                 @if($car->images->count() > 0)
                 <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
@@ -349,10 +370,10 @@
                     </div>
                 </div>
                 @endif
-
-                <!-- Add More Images -->
+                
                 <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-slate-900 mb-4">Add More Photos</h2>
+                    <p class="text-slate-600 text-sm mb-4">Upload new images (max 2MB each). Existing images will be kept.</p>
+
                     <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-amber-400 transition-colors">
                         <input type="file" name="images[]" multiple accept="image/*" id="images" class="hidden" @change="previewImages($event)">
                         <label for="images" class="cursor-pointer">
@@ -360,11 +381,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <p class="mt-2 text-slate-600">Click to upload photos</p>
-                            <p class="text-sm text-slate-400">JPEG, PNG, WebP up to 5MB</p>
+                            <p class="text-sm text-slate-400">JPEG, PNG, WebP up to 2MB</p>
                         </label>
                     </div>
 
-                    <!-- New Image Previews -->
+                    <!-- Image Preview -->
                     <div x-show="imagePreviews.length > 0" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                         <template x-for="(src, index) in imagePreviews" :key="index">
                             <div class="relative group">
@@ -373,6 +394,10 @@
                             </div>
                         </template>
                     </div>
+
+                    @error('images.*')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
@@ -420,12 +445,13 @@
         const existingValues = @json($car->attributeValues->pluck('value', 'attribute_id'));
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Dynamic attributes loading
             const categorySelect = document.querySelector('select[name="category_id"]');
             const section = document.getElementById('dynamic-attributes-section');
             const container = document.getElementById('dynamic-attributes-container');
             const loading = document.getElementById('attributes-loading');
 
-            async function loadAttributes(categoryId, skipLoading = false) {
+            async function loadAttributes(categoryId) {
                 if (!categoryId) {
                     section.classList.add('hidden');
                     container.innerHTML = '';
@@ -433,10 +459,8 @@
                 }
 
                 section.classList.remove('hidden');
-                if (!skipLoading) {
-                    loading.classList.remove('hidden');
-                    container.innerHTML = '';
-                }
+                loading.classList.remove('hidden');
+                container.innerHTML = '';
 
                 try {
                     const response = await fetch(`/api/categories/${categoryId}/attributes`);
@@ -459,9 +483,9 @@
                 loadAttributes(this.value);
             });
 
-            // Load attributes on page load for existing car
+            // Load on page load if category is pre-selected
             if (categorySelect.value) {
-                loadAttributes(categorySelect.value, true);
+                loadAttributes(categorySelect.value);
             }
         });
 
@@ -518,7 +542,7 @@
                     </select>`;
                     break;
                 case 'multiselect':
-                    const selectedValues = existingValue ? (typeof existingValue === 'string' ? JSON.parse(existingValue || '[]') : existingValue) : [];
+                     const selectedValues = existingValue ? (typeof existingValue === 'string' ? JSON.parse(existingValue || '[]') : existingValue) : [];
                     input = `<div class="space-y-2 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-lg">
                         ${attr.options.map(opt => `
                             <label class="flex items-center gap-2 cursor-pointer">
@@ -530,7 +554,7 @@
                     </div>`;
                     break;
                 case 'boolean':
-                    const isTrue = existingValue === '1' || existingValue === 1 || existingValue === true;
+                     const isTrue = existingValue === '1' || existingValue === 1 || existingValue === true;
                     input = `<div class="flex items-center gap-3 pt-2">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="${fieldName}" value="1" ${isTrue ? 'checked' : ''}
@@ -586,17 +610,17 @@
             `;
         }
 
-        function carEditStepper() {
+        function carFormStepper() {
             return {
                 currentStep: 1,
                 imagePreviews: [],
                 validationErrors: [],
                 steps: [
-                    { number: 1, shortTitle: 'Basic Info', title: 'Basic Information', heading: 'Update your car details', description: 'Edit the basic information like make, model, year, and price' },
-                    { number: 2, shortTitle: 'Specifications', title: 'Specifications', heading: 'Car Specifications', description: 'Update technical details and specifications of your vehicle' },
-                    { number: 3, shortTitle: 'Description', title: 'Description', heading: 'Update description', description: 'Revise your car description to attract more buyers' },
-                    { number: 4, shortTitle: 'Contact', title: 'Contact Information', heading: 'Your contact details', description: 'Update your contact information for interested buyers' },
-                    { number: 5, shortTitle: 'Photos', title: 'Manage Photos', heading: 'Update your car photos', description: 'Review existing photos and add new ones' },
+                    { number: 1, shortTitle: 'Basic Info', title: 'Basic Information', heading: 'Tell us about your car', description: 'Enter the basic details like make, model, year, and price' },
+                    { number: 2, shortTitle: 'Specifications', title: 'Specifications', heading: 'Car Specifications', description: 'Add technical details and specifications of your vehicle' },
+                    { number: 3, shortTitle: 'Description', title: 'Description', heading: 'Describe your car', description: 'Write a compelling description to attract potential buyers' },
+                    { number: 4, shortTitle: 'Contact', title: 'Contact Information', heading: 'How can buyers reach you?', description: 'Provide your contact details for interested buyers' },
+                    { number: 5, shortTitle: 'Photos', title: 'Upload Photos', heading: 'Add photos of your car', description: 'High-quality photos help sell your car faster' },
                 ],
 
                 validateStep(step) {
@@ -608,6 +632,7 @@
                     let isValid = true;
 
                     requiredFields.forEach(field => {
+                        // Remove previous error styling
                         field.classList.remove('border-red-500', 'ring-red-500');
                         const errorMsg = field.parentElement.querySelector('.step-error');
                         if (errorMsg) errorMsg.remove();
@@ -621,6 +646,7 @@
                             fieldValid = field.value !== '';
                         } else {
                             fieldValid = field.value.trim() !== '';
+                            // Check minlength
                             if (fieldValid && field.minLength > 0 && field.value.trim().length < field.minLength) {
                                 fieldValid = false;
                                 this.validationErrors.push(`${field.previousElementSibling?.textContent?.trim() || 'Field'} must be at least ${field.minLength} characters`);
@@ -632,6 +658,8 @@
                             field.classList.add('border-red-500', 'ring-red-500');
                             field.style.animation = 'shake 0.5s ease-in-out';
                             setTimeout(() => field.style.animation = '', 500);
+
+                            // Add inline error
                             const label = field.closest('div')?.querySelector('label');
                             const fieldName = label?.textContent?.trim()?.replace(' *', '') || 'This field';
                             if (!this.validationErrors.find(e => e.includes(fieldName))) {
@@ -640,18 +668,33 @@
                         }
                     });
 
-                    if (!isValid) this.showValidationToast();
+                    if (!isValid) {
+                        // Show toast notification
+                        this.showValidationToast();
+                    }
+
                     return isValid;
                 },
 
                 showValidationToast() {
                     const existing = document.getElementById('validation-toast');
                     if (existing) existing.remove();
+
                     const toast = document.createElement('div');
                     toast.id = 'validation-toast';
                     toast.className = 'fixed top-4 right-4 z-50 bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl shadow-2xl max-w-sm';
                     toast.style.animation = 'slideIn 0.3s ease-out';
-                    toast.innerHTML = `<div class="flex items-start gap-3"><svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div><p class="font-semibold text-sm">Please fill in required fields</p><ul class="text-xs mt-1 space-y-0.5">${this.validationErrors.map(e => `<li>• ${e}</li>`).join('')}</ul></div></div>`;
+                    toast.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-sm">Please fill in required fields</p>
+                                <ul class="text-xs mt-1 space-y-0.5">${this.validationErrors.map(e => `<li>• ${e}</li>`).join('')}</ul>
+                            </div>
+                        </div>
+                    `;
                     document.body.appendChild(toast);
                     setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
                 },
@@ -672,6 +715,7 @@
 
                 goToStep(step) {
                     if (step > this.currentStep) {
+                        // Validate all steps in between before jumping forward
                         for (let i = this.currentStep; i < step; i++) {
                             if (!this.validateStep(i)) return;
                         }
@@ -683,15 +727,25 @@
                 previewImages(event) {
                     this.imagePreviews = [];
                     const files = event.target.files;
-                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    const maxSize = 2 * 1024 * 1024; // 2MB
+                    const maxTotalSize = 7.5 * 1024 * 1024; // 7.5MB to be safe within 8MB post_max_size
 
+                    let totalSize = 0;
                     for (let i = 0; i < files.length; i++) {
                         if (files[i].size > maxSize) {
-                            alert(`File "${files[i].name}" is too large. Maximum size is 5MB.`);
+                            alert(`File "${files[i].name}" is too large. Maximum size is 2MB per image.`);
                             event.target.value = ''; // Clear input
                             this.imagePreviews = [];
                             return;
                         }
+                        totalSize += files[i].size;
+                    }
+
+                    if (totalSize > maxTotalSize) {
+                        alert(`Total file size exceeds the server limit. Please upload fewer images or compress them (Max total: 7.5MB).`);
+                        event.target.value = ''; // Clear input
+                        this.imagePreviews = [];
+                        return;
                     }
 
                     for (let i = 0; i < files.length; i++) {
@@ -713,20 +767,31 @@
             @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         `;
         document.head.appendChild(validationStyles);
+
+        @php
+            $currentMakeLabel = old('make', $car->make);
+            $currentMakeId = null;
+            // Iterate over the makes option array safely
+            if (isset($dropdownOptions['makes']) && is_iterable($dropdownOptions['makes'])) {
+                foreach ($dropdownOptions['makes'] as $option) {
+                    if ($option->label === $currentMakeLabel) {
+                        $currentMakeId = $option->id;
+                        break;
+                    }
+                }
+            }
+        @endphp
+
         function carMakeModel() {
             return {
-                selectedMakeId: '',
-                selectedMakeLabel: '',
-                selectedModel: '',
+                selectedMakeId: '{{ $currentMakeId }}',
+                selectedMakeLabel: '{{ $currentMakeLabel }}',
+                selectedModel: '{{ old('model', $car->model) }}',
                 models: [],
                 
                 init() {
-                    this.selectedMakeId = '{{ $currentMakeId }}';
-                    this.selectedMakeLabel = '{{ old('make', $car->make) }}';
-                    this.selectedModel = '{{ old('model', $car->model) }}';
-                    
-                    if (this.selectedMakeId) {
-                        this.fetchModels();
+                    if(this.selectedMakeId) {
+                         this.fetchModels();
                     }
                 },
 
@@ -738,9 +803,7 @@
                     }
 
                     if (!this.selectedMakeId) {
-                        if (!this.selectedMakeId && this.selectedMakeLabel) {
-                             this.selectedMakeLabel = '';
-                        }
+                        this.selectedMakeLabel = '';
                         return;
                     }
 
@@ -756,7 +819,7 @@
             }
         }
 
-        function locationSearch() {
+       function locationSearch() {
             return {
                 searchQuery: '',
                 results: [],
@@ -769,6 +832,7 @@
                     // Initialize with old values or existing car data
                     this.selectedCity = '{{ old('city', $car->city) }}';
                     this.selectedCountry = '{{ old('country', $car->country) }}';
+                    
                     if (this.selectedCity) {
                         this.searchQuery = this.selectedCity;
                     }
@@ -795,38 +859,15 @@
                         }
                     } catch (error) {
                         console.error('Search failed:', error);
-                    } finally {
-                        this.searching = false;
                     }
+                    this.searching = false;
                 },
 
-                async selectLocation(result) {
+                selectLocation(result) {
                     this.selectedCity = result.city;
                     this.selectedCountry = result.country;
-                    this.searchQuery = result.city; // Display city in input
+                    this.searchQuery = result.city;
                     this.showResults = false;
-
-                    // If it's a new location from API, save it to DB
-                    if (result.source === 'api') {
-                        try {
-                            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                            await fetch('/api/locations/create', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken
-                                },
-                                body: JSON.stringify({
-                                    city: result.city,
-                                    country: result.country,
-                                    latitude: result.latitude,
-                                    longitude: result.longitude
-                                })
-                            });
-                        } catch (error) {
-                            console.error('Failed to save location:', error);
-                        }
-                    }
                 }
             }
         }

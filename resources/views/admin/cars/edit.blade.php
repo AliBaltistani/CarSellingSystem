@@ -1,5 +1,6 @@
 <x-layouts.admin title="Edit Car">
-    <div x-data="adminCarEditStepper()">
+    <style>[x-cloak] { display: none !important; }</style>
+    <div x-data="adminCarEditStepper()" x-cloak>
 
         <!-- Step Indicator -->
         <div class="mb-8">
@@ -59,7 +60,7 @@
             @method('PUT')
 
             <!-- Step 1: Basic Information -->
-            <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 1" data-step="1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6" x-data="carMakeModel()">
                     @php
                         // Logic to find the ID of the current make (string)
@@ -132,12 +133,22 @@
                             <input type="number" name="price" value="{{ old('price', $car->price) }}" required min="0"
                                 class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
+                            <select name="condition" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select Condition</option>
+                                @foreach($dropdownOptions['conditions'] as $option)
+                                    <option value="{{ $option->value }}" {{ old('condition', $car->condition) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Step 2: Specifications -->
-            <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 2" data-step="2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
@@ -146,15 +157,8 @@
                                     class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
-                                <select name="condition" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                    <option value="">Select Condition</option>
-                                    @foreach($dropdownOptions['conditions'] as $option)
-                                        <option value="{{ $option->value }}" {{ old('condition', $car->condition) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+
+                            {{-- Condition moved to Step 1 --}}
 
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Transmission *</label>
@@ -252,14 +256,14 @@
             </div>
 
             <!-- Step 3: Description -->
-            <div x-show="currentStep === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 3" data-step="3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <x-forms.rich-editor name="description" :value="$car->description" height="200px" :required="true" />
                 </div>
             </div>
 
             <!-- Step 4: Contact & Location -->
-            <div x-show="currentStep === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 4" data-step="4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6" x-data="locationSearch()">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
@@ -317,7 +321,7 @@
             </div>
 
             <!-- Step 5: Status & Options -->
-            <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 5" data-step="5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="col-span-1 md:col-span-2 lg:col-span-4 mb-4">
@@ -366,7 +370,7 @@
             </div>
 
             <!-- Step 6: Photos -->
-            <div x-show="currentStep === 6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 6" data-step="6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <!-- Current Images -->
                 @if($car->images->count() > 0)
                 <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
@@ -659,7 +663,7 @@
                 imagePreviews: [],
                 validationErrors: [],
                 steps: [
-                    { number: 1, shortTitle: 'Basic Info', title: 'Basic Information', heading: 'Update Car Details', description: 'Edit the basic details like make, model, year, and price' },
+                    { number: 1, shortTitle: 'Basic Info', title: 'Basic Information', heading: 'Update Car Details', description: 'Edit the basic details like make, model, year, condition and price' },
                     { number: 2, shortTitle: 'Specs', title: 'Specifications', heading: 'Technical Specifications', description: 'Update technical details and specifications of the vehicle' },
                     { number: 3, shortTitle: 'Description', title: 'Description', heading: 'Car Description', description: 'Revise the vehicle description' },
                     { number: 4, shortTitle: 'Contact', title: 'Contact & Location', heading: 'Contact & Location', description: 'Update contact details and listing location' },
@@ -669,13 +673,23 @@
 
                 validateStep(step) {
                     this.validationErrors = [];
-                    const stepEl = document.querySelector(`[x-show="currentStep === ${step}"]`);
+                    // Scope to the edit form to avoid conflicts with other elements (like the create form if loaded in same DOM, though unlikely here)
+                    // But more importantly, ensure we're looking at the right step within *this* form
+                    const form = document.getElementById('admin-car-edit-form');
+                    if (!form) return true;
+                    
+                    const stepEl = form.querySelector(`[data-step="${step}"]`);
                     if (!stepEl) return true;
+                    
                     const requiredFields = stepEl.querySelectorAll('[required]');
                     let isValid = true;
                     requiredFields.forEach(field => {
                         field.classList.remove('border-red-500', 'ring-red-500');
                         let fieldValid = true;
+                        
+                        // Check if field is visible (handle cases where x-show might hide parents)
+                        if (field.offsetParent === null) return;
+
                         if (field.type === 'checkbox' || field.type === 'radio') {
                             const name = field.getAttribute('name');
                             const checked = stepEl.querySelectorAll(`[name="${name}"]:checked`);

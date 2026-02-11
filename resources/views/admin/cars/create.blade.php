@@ -1,5 +1,6 @@
 <x-layouts.admin title="Add New Car">
-    <div x-data="adminCarStepper()">
+    <style>[x-cloak] { display: none !important; }</style>
+    <div x-data="adminCarStepper()" x-cloak>
 
         <!-- Step Indicator -->
         <div class="mb-8">
@@ -58,7 +59,7 @@
             @csrf
 
             <!-- Step 1: Basic Information -->
-            <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 1" data-step="1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6" x-data="carMakeModel()">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-3">
@@ -133,7 +134,7 @@
             </div>
 
             <!-- Step 2: Specifications -->
-            <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 2" data-step="2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div>
@@ -243,14 +244,14 @@
             </div>
 
             <!-- Step 3: Description -->
-            <div x-show="currentStep === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 3" data-step="3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <x-forms.rich-editor name="description" value="" height="200px" :required="true" />
                 </div>
             </div>
 
             <!-- Step 4: Contact & Location -->
-            <div x-show="currentStep === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 4" data-step="4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6" x-data="locationSearch()">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
@@ -308,7 +309,7 @@
             </div>
 
             <!-- Step 5: Status & Options -->
-            <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 5" data-step="5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="col-span-1 md:col-span-2 lg:col-span-4 mb-4">
@@ -349,7 +350,7 @@
             </div>
 
             <!-- Step 6: Images -->
-            <div x-show="currentStep === 6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 6" data-step="6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-amber-400 transition-colors">
                         <input type="file" name="images[]" multiple accept="image/*" id="admin-images" class="hidden" @change="previewImages($event)">
@@ -626,7 +627,9 @@
 
                 validateStep(step) {
                     this.validationErrors = [];
-                    const stepEl = document.querySelector(`[x-show="currentStep === ${step}"]`);
+                    const form = document.getElementById('admin-car-form');
+                    if (!form) return true;
+                    const stepEl = form.querySelector(`[data-step="${step}"]`);
                     if (!stepEl) return true;
                     const requiredFields = stepEl.querySelectorAll('[required]');
                     let isValid = true;
