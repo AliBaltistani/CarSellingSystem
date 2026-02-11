@@ -54,7 +54,7 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.cars.update', $car) }}" method="POST" enctype="multipart/form-data" id="admin-car-edit-form">
+        <form action="{{ route('admin.cars.update', $car) }}" method="POST" enctype="multipart/form-data" id="admin-car-edit-form" novalidate>
             @csrf
             @method('PUT')
 
@@ -320,6 +320,15 @@
             <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="col-span-1 md:col-span-2 lg:col-span-4 mb-4">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Status *</label>
+                            <select name="status" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="available" {{ old('status', $car->status) == 'available' ? 'selected' : '' }}>Available</option>
+                                <option value="sold" {{ old('status', $car->status) == 'sold' ? 'selected' : '' }}>Sold</option>
+                                <option value="pending" {{ old('status', $car->status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="reserved" {{ old('status', $car->status) == 'reserved' ? 'selected' : '' }}>Reserved</option>
+                            </select>
+                        </div>
                         <label class="flex items-center space-x-3 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="is_published" value="1" {{ old('is_published', $car->is_published) ? 'checked' : '' }}
                                 class="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
@@ -400,7 +409,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <p class="mt-2 text-slate-600">Click to upload photos</p>
-                            <p class="text-sm text-slate-400">Upload multiple images (max 10, 5MB each)</p>
+                            <p class="text-sm text-slate-400">Upload multiple images (max 10, 2MB each)</p>
                         </label>
                     </div>
 
@@ -442,7 +451,7 @@
                         </svg>
                     </button>
 
-                    <button type="submit" x-show="currentStep === totalSteps"
+                    <button type="button" x-show="currentStep === totalSteps" @click="submitForm()"
                         class="inline-flex items-center px-8 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/25">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -732,14 +741,20 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
 
+                submitForm() {
+                    if (this.validateStep(this.currentStep)) {
+                        document.getElementById('admin-car-edit-form').submit();
+                    }
+                },
+
                 previewImages(event) {
                     this.imagePreviews = [];
                     const files = event.target.files;
-                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    const maxSize = 2 * 1024 * 1024; // 2MB
 
                     for (let i = 0; i < files.length; i++) {
                         if (files[i].size > maxSize) {
-                            alert(`File "${files[i].name}" is too large. Maximum size is 5MB.`);
+                            alert(`File "${files[i].name}" is too large. Maximum size is 2MB per image.`);
                             event.target.value = ''; // Clear input
                             this.imagePreviews = [];
                             return;

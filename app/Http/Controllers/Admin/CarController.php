@@ -10,6 +10,7 @@ use App\Models\CarImage;
 use App\Models\DropdownOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class CarController extends Controller
 {
@@ -90,7 +91,7 @@ class CarController extends Controller
                 'is_featured' => 'boolean',
                 'is_published' => 'boolean',
                 'negotiable' => 'boolean',
-                'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+                'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
             ]);
 
             $validated['user_id'] = auth()->id(); // Admin creates it, so it belongs to admin
@@ -132,6 +133,31 @@ class CarController extends Controller
     }
 
     // ... show method ...
+
+    public function show(Car $car)
+    {
+        $car->load(['category', 'images', 'user', 'attributeValues.attribute.group', 'attributeValues.attribute.options']);
+
+        // Get related cars (reuse logic from public controller, but don't filter by published/available if needed, 
+        // though usually related cars should be valid public cars)
+        $relatedCars = Car::with(['images'])
+            ->where('is_published', true)
+            ->where('status', 'available')
+            ->where('id', '!=', $car->id)
+            ->where(function ($query) use ($car) {
+                $query->where('category_id', $car->category_id)
+                    ->orWhere('make', $car->make);
+            })
+            ->latest()
+            ->take(4)
+            ->get();
+
+        // Pass empty SEO as it's an admin preview, or generate it if desired. 
+        // The view expects $seo variable.
+        $seo = []; 
+
+        return view('cars.show', compact('car', 'relatedCars', 'seo'));
+    }
 
     public function edit(Car $car)
     {
@@ -189,7 +215,7 @@ class CarController extends Controller
             'status' => 'required|in:available,sold,pending,reserved',
             'is_featured' => 'boolean',
             'is_published' => 'boolean',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $validated['is_featured'] = $request->boolean('is_featured');
