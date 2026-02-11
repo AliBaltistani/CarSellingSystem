@@ -46,7 +46,7 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 @if($group->icon)
-                                    <span class="text-xl">{{ $group->icon }}</span>
+                                    <span class="text-xl">{!! $group->icon !!}</span>
                                 @endif
                                 <div>
                                     <p class="font-medium text-slate-900">{{ $group->name }}</p>

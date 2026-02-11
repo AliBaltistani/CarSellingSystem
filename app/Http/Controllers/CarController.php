@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attribute;
 use App\Models\Car;
+use App\Models\CarAttributeValue;
 use App\Models\Category;
 use App\Models\CarImage;
 use App\Models\Setting;
@@ -81,7 +82,7 @@ class CarController extends Controller
             abort(404);
         }
 
-        $car->load(['category', 'images', 'user']);
+        $car->load(['category', 'images', 'user', 'attributeValues.attribute.group', 'attributeValues.attribute.options']);
         
         // Increment views
         $car->incrementViews();
@@ -218,6 +219,11 @@ class CarController extends Controller
             }
         }
 
+        // Save dynamic attribute values
+        if ($request->has('attributes')) {
+            CarAttributeValue::saveForCar($car, $request->input('attributes', []));
+        }
+
         return redirect()->route('cars.my-listings')
             ->with('success', 'Your car listing has been created!');
     }
@@ -228,7 +234,7 @@ class CarController extends Controller
 
         $categories = Category::active()->orderBy('name')->get();
         $dropdownOptions = $this->getDropdownOptions();
-        $car->load('images');
+        $car->load(['images', 'attributeValues']);
 
         return view('cars.edit', compact('car', 'categories', 'dropdownOptions'));
     }
@@ -252,6 +258,11 @@ class CarController extends Controller
                     'is_primary' => false,
                 ]);
             }
+        }
+
+        // Save dynamic attribute values
+        if ($request->has('attributes')) {
+            CarAttributeValue::saveForCar($car, $request->input('attributes', []));
         }
 
         return redirect()->route('cars.my-listings')

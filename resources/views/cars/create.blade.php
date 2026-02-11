@@ -156,6 +156,190 @@
                 </div>
             </div>
 
+            <!-- Dynamic Attributes Section -->
+            <div id="dynamic-attributes-section" class="hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-slate-900">Custom Specifications</h2>
+                        <span id="attributes-loading" class="hidden text-sm text-slate-500">
+                            <svg class="animate-spin h-4 w-4 inline mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Loading...
+                        </span>
+                    </div>
+                    <div id="dynamic-attributes-container">
+                        <!-- Attributes will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const categorySelect = document.querySelector('select[name="category_id"]');
+                    const section = document.getElementById('dynamic-attributes-section');
+                    const container = document.getElementById('dynamic-attributes-container');
+                    const loading = document.getElementById('attributes-loading');
+
+                    async function loadAttributes(categoryId) {
+                        if (!categoryId) {
+                            section.classList.add('hidden');
+                            container.innerHTML = '';
+                            return;
+                        }
+
+                        section.classList.remove('hidden');
+                        loading.classList.remove('hidden');
+                        container.innerHTML = '';
+
+                        try {
+                            const response = await fetch(`/api/categories/${categoryId}/attributes`);
+                            const groups = await response.json();
+
+                            if (groups.length === 0) {
+                                section.classList.add('hidden');
+                            } else {
+                                container.innerHTML = renderAttributeGroups(groups);
+                            }
+                        } catch (error) {
+                            console.error('Error loading attributes:', error);
+                            container.innerHTML = '<p class="text-red-500 text-sm">Error loading attributes.</p>';
+                        }
+
+                        loading.classList.add('hidden');
+                    }
+
+                    categorySelect.addEventListener('change', function() {
+                        loadAttributes(this.value);
+                    });
+
+                    // Load on page load if category is pre-selected
+                    if (categorySelect.value) {
+                        loadAttributes(categorySelect.value);
+                    }
+                });
+
+                function renderAttributeGroups(groups) {
+                    return groups.map(group => `
+                        <div class="mb-6 last:mb-0">
+                            <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                <span>${group.group_icon}</span>
+                                ${group.group}
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${group.attributes.map(attr => renderAttributeField(attr)).join('')}
+                            </div>
+                        </div>
+                    `).join('<hr class="my-6 border-slate-200">');
+                }
+
+                function renderAttributeField(attr) {
+                    const required = attr.is_required ? 'required' : '';
+                    const requiredMark = attr.is_required ? ' *' : '';
+                    const fieldName = `attributes[${attr.id}]`;
+                    const defaultValue = attr.default_value || '';
+
+                    let input = '';
+
+                    switch (attr.type) {
+                        case 'text':
+                            input = `<input type="text" name="${fieldName}" value="${defaultValue}" ${required}
+                                placeholder="${attr.placeholder || ''}"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
+                            break;
+                        case 'textarea':
+                            input = `<textarea name="${fieldName}" rows="3" ${required}
+                                placeholder="${attr.placeholder || ''}"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">${defaultValue}</textarea>`;
+                            break;
+                        case 'number':
+                            input = `<div class="relative">
+                                ${attr.prefix ? `<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">${attr.prefix}</span>` : ''}
+                                <input type="number" name="${fieldName}" value="${defaultValue}" ${required}
+                                    placeholder="${attr.placeholder || ''}"
+                                    step="${attr.step || 'any'}"
+                                    ${attr.min_value !== null ? `min="${attr.min_value}"` : ''}
+                                    ${attr.max_value !== null ? `max="${attr.max_value}"` : ''}
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm ${attr.prefix ? 'pl-12' : ''} ${attr.suffix ? 'pr-12' : ''}">
+                                ${attr.suffix ? `<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">${attr.suffix}</span>` : ''}
+                            </div>`;
+                            break;
+                        case 'select':
+                            input = `<select name="${fieldName}" ${required}
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">
+                                <option value="">Select...</option>
+                                ${attr.options.map(opt => `<option value="${opt.value}" ${opt.is_default ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                            </select>`;
+                            break;
+                        case 'multiselect':
+                            input = `<div class="space-y-2 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-lg">
+                                ${attr.options.map(opt => `
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="${fieldName}[]" value="${opt.value}" ${opt.is_default ? 'checked' : ''}
+                                            class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+                                        <span class="text-sm text-slate-700">${opt.label}</span>
+                                    </label>
+                                `).join('')}
+                            </div>`;
+                            break;
+                        case 'boolean':
+                            input = `<div class="flex items-center gap-3 pt-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="${fieldName}" value="1"
+                                        class="w-4 h-4 border-slate-300 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-sm text-slate-700">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="${fieldName}" value="0" checked
+                                        class="w-4 h-4 border-slate-300 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-sm text-slate-700">No</span>
+                                </label>
+                            </div>`;
+                            break;
+                        case 'date':
+                            input = `<input type="date" name="${fieldName}" value="${defaultValue}" ${required}
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
+                            break;
+                        case 'color':
+                            input = `<div class="flex flex-wrap gap-2 pt-2">
+                                ${attr.options.map(opt => `
+                                    <label class="cursor-pointer group">
+                                        <input type="radio" name="${fieldName}" value="${opt.value}" class="sr-only peer" ${opt.is_default ? 'checked' : ''}>
+                                        <span class="block w-8 h-8 rounded-full border-2 border-slate-200 peer-checked:border-amber-500 peer-checked:ring-2 peer-checked:ring-amber-200"
+                                            style="background-color: ${opt.color || opt.value}" title="${opt.label}"></span>
+                                    </label>
+                                `).join('')}
+                            </div>`;
+                            break;
+                        case 'range':
+                            const rangeValue = defaultValue || Math.round(((attr.min_value || 0) + (attr.max_value || 100)) / 2);
+                            input = `<div class="space-y-2">
+                                <input type="range" name="${fieldName}" value="${rangeValue}"
+                                    min="${attr.min_value || 0}" max="${attr.max_value || 100}" step="${attr.step || 1}"
+                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                    oninput="this.nextElementSibling.textContent = this.value">
+                                <div class="text-center text-sm text-slate-600">${rangeValue}</div>
+                            </div>`;
+                            break;
+                        default:
+                            input = `<input type="text" name="${fieldName}" value="${defaultValue}" ${required}
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
+                    }
+
+                    return `
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                ${attr.icon ? `<span class="mr-1">${attr.icon}</span>` : ''}
+                                ${attr.name}${requiredMark}
+                            </label>
+                            ${input}
+                            ${attr.help_text ? `<p class="mt-1 text-xs text-slate-500">${attr.help_text}</p>` : ''}
+                        </div>
+                    `;
+                }
+            </script>
+
             <!-- Description -->
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-4">Description</h2>

@@ -10,10 +10,12 @@ use Illuminate\Http\Request;
 class CategoryAttributeController extends Controller
 {
     /**
-     * Get attributes for a specific category
+     * Get attributes for a specific category (by ID)
      */
-    public function index(Category $category)
+    public function index($categoryId)
     {
+        $category = Category::findOrFail($categoryId);
+
         // Get attributes assigned to this category, grouped by their group
         $attributes = $category->getAttributesWithOptions();
 
@@ -27,7 +29,7 @@ class CategoryAttributeController extends Controller
         foreach ($grouped as $groupName => $attrs) {
             $result[] = [
                 'group' => $groupName,
-                'group_icon' => $attrs->first()->group?->icon ?? '📋',
+                'group_icon' => $attrs->first()->group?->icon ?? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
                 'attributes' => $attrs->map(function($attr) {
                     return [
                         'id' => $attr->id,

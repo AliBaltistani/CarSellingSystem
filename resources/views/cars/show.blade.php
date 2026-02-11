@@ -140,6 +140,40 @@
                     </div>
                 </div>
                 @endif
+
+                <!-- Custom Specifications (Dynamic Attributes) -->
+                @php
+                    $groupedAttributes = $car->attributeValues
+                        ->filter(fn($av) => $av->value !== null && $av->value !== '')
+                        ->groupBy(fn($av) => $av->attribute->group->name ?? 'General');
+                @endphp
+                @if($groupedAttributes->count() > 0)
+                <div class="bg-white rounded-2xl shadow-sm mt-6 p-6">
+                    <h2 class="text-xl font-bold text-slate-900 mb-4">Custom Specifications</h2>
+                    
+                    @foreach($groupedAttributes as $groupName => $values)
+                        <div class="mb-6 last:mb-0">
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">{{ $groupName }}</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                @foreach($values as $attrValue)
+                                    <div class="p-4 bg-slate-50 rounded-xl">
+                                        <p class="text-sm text-slate-500">
+                                            @if($attrValue->attribute->icon)
+                                                <span class="mr-1 inline-flex">{!! $attrValue->attribute->icon !!}</span>
+                                            @endif
+                                            {{ $attrValue->attribute->name }}
+                                        </p>
+                                        <p class="font-semibold text-slate-900">{{ $attrValue->attribute->formatValue($attrValue->value) }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @if(!$loop->last)
+                            <hr class="my-4 border-slate-100">
+                        @endif
+                    @endforeach
+                </div>
+                @endif
             </div>
 
             <!-- Sidebar -->
