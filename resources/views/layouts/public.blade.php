@@ -78,6 +78,7 @@
                                 class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-slate-100">
                                 <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Dashboard</a>
                                 <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Profile</a>
+                                <a href="{{ route('orders.my-orders') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">My Orders</a>
                                 @if(auth()->user()->hasRole('admin'))
                                     <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Admin Panel</a>
                                 @endif

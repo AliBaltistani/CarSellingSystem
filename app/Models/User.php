@@ -92,4 +92,9 @@ class User extends Authenticatable
     {
         return $this->favorites()->where('car_id', $car->id)->exists();
     }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }

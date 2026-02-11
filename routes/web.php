@@ -6,6 +6,9 @@ use App\Http\Controllers\CarController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\UserOrderController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\CarController as AdminCarController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
@@ -17,6 +20,7 @@ use App\Http\Controllers\Admin\LocationController as AdminLocationController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\FinancingPartnerController as AdminFinancingPartnerController;
 use App\Http\Controllers\Admin\OfferController as AdminOfferController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\AttributeGroupController as AdminAttributeGroupController;
 use App\Http\Controllers\Admin\AttributeController as AdminAttributeController;
 use App\Http\Controllers\Admin\DropdownOptionController as AdminDropdownOptionController;
@@ -46,6 +50,12 @@ Route::get('/page/{slug}', [PageController::class, 'show'])->name('page.show');
 
 // Contact Form Submission
 Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'submit'])->name('contact.submit');
+
+// Offer Detail Page (Public)
+Route::get('/offers/{offer}', [CheckoutController::class, 'show'])->name('offers.show');
+
+// Stripe Webhook (excluded from CSRF via middleware)
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 /*
 |--------------------------------------------------------------------------
@@ -91,6 +101,12 @@ Route::middleware('auth')->group(function () {
     
     // User Inquiries
     Route::get('/my-inquiries', [InquiryController::class, 'myInquiries'])->name('inquiries.my-inquiries');
+
+    // Checkout & Orders
+    Route::post('/offers/{offer}/checkout', [CheckoutController::class, 'checkout'])->name('offers.checkout');
+    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+    Route::get('/my-orders', [UserOrderController::class, 'index'])->name('orders.my-orders');
 });
 
 /*
@@ -173,6 +189,10 @@ Route::prefix('admin')
         Route::resource('offers', AdminOfferController::class)->except('show');
         Route::post('offers/{offer}/toggle-active', [AdminOfferController::class, 'toggleActive'])
             ->name('offers.toggle-active');
+
+        // Orders Management
+        Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
 
         // Dynamic Attribute Engine
         Route::resource('attribute-groups', AdminAttributeGroupController::class)->except('show');

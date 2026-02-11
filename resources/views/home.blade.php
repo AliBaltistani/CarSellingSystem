@@ -548,9 +548,9 @@
                             @endif
                             
                             <!-- CTA -->
-                            <a href="{{ $offer->cta_link ?: route('cars.index') }}" 
+                            <a href="{{ route('offers.show', $offer) }}" 
                                class="block w-full text-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-all group-hover:shadow-lg group-hover:shadow-amber-500/25">
-                                {{ $offer->cta_text ?? 'Learn More' }}
+                                {{ $offer->cta_text ?? 'View Deal' }}
                             </a>
                         </div>
                     </div>

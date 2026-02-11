@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Offer extends Model
 {
@@ -21,6 +22,7 @@ class Offer extends Model
         'features',
         'cta_text',
         'cta_link',
+        'stripe_price_id',
         'is_active',
         'is_featured',
         'order',
@@ -88,5 +90,11 @@ class Offer extends Model
             ->ordered()
             ->limit($limit)
             ->get();
+    }
+
+    // Relationships
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
     }
 }

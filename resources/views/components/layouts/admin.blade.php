@@ -122,6 +122,14 @@
                     Offers
                 </a>
 
+                <a href="{{ route('admin.orders.index') }}"
+                    class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.orders.*') ? 'bg-amber-500/10 text-amber-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    Orders
+                </a>
+
                 <a href="{{ route('admin.attributes.index') }}"
                     class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.attributes.*') || request()->routeIs('admin.attribute-groups.*') ? 'bg-amber-500/10 text-amber-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

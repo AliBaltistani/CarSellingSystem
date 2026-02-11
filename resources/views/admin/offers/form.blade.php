@@ -125,6 +125,18 @@
                     </div>
                 </div>
 
+                <!-- Stripe Integration -->
+                <div>
+                    <label for="stripe_price_id" class="block text-sm font-medium text-slate-700 mb-1">Stripe Price ID</label>
+                    <input type="text" id="stripe_price_id" name="stripe_price_id" 
+                        value="{{ old('stripe_price_id', $offer->stripe_price_id) }}" placeholder="price_1ABC..."
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    <p class="mt-1 text-xs text-slate-500">Optional. Pre-created Stripe price ID for this offer.</p>
+                    @error('stripe_price_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Order -->
                     <div>
