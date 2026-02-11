@@ -60,35 +60,67 @@
 
             <!-- Step 1: Basic Information -->
             <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
-                <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6" x-data="carMakeModel()">
+                    @php
+                        // Logic to find the ID of the current make (string)
+                        $currentMakeLabel = old('make', $car->make);
+                        $currentMakeId = null;
+                        if (!empty($dropdownOptions['makes'])) {
+                            foreach ($dropdownOptions['makes'] as $option) {
+                                if ($option->label === $currentMakeLabel) {
+                                    $currentMakeId = $option->id;
+                                    break;
+                                }
+                            }
+                        }
+                    @endphp
+
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-3">
                             <label class="block text-sm font-medium text-slate-700 mb-2">Title *</label>
                             <input type="text" name="title" value="{{ old('title', $car->title) }}" required
-                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 @error('title') border-red-500 @enderror">
+                            @error('title')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
-                            <input type="text" name="make" value="{{ old('make', $car->make) }}" required
+                            <select required x-model="selectedMakeId" @change="fetchModels()"
                                 class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select Make</option>
+                                @foreach($dropdownOptions['makes'] ?? [] as $option)
+                                    <option value="{{ $option->id }}" data-label="{{ $option->label }}" {{ (old('make') == $option->label || $currentMakeId == $option->id) ? 'selected' : '' }}>{{ $option->label }}</option>
+                                @endforeach
+                            </select>
+                            {{-- Store the Label (Name) in the 'make' field --}}
+                            <input type="hidden" name="make" :value="selectedMakeLabel">
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
-                            <input type="text" name="model" value="{{ old('model', $car->model) }}" required
-                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            <select name="model" required x-model="selectedModel" :disabled="!selectedMakeId"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400">
+                                <option value="">Select Model</option>
+                                <template x-for="model in models" :key="model.id">
+                                    <option :value="model.label" x-text="model.label"></option>
+                                </template>
+                            </select>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
-                            <input type="number" name="year" value="{{ old('year', $car->year) }}" required
-                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            <select name="year" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select Year</option>
+                                @for($i = date('Y') + 1; $i >= 1900; $i--)
+                                    <option value="{{ $i }}" {{ old('year', $car->year) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                @endfor
+                            </select>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Category *</label>
                             <select name="category_id" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select Category</option>
                                 @foreach($categories ?? [] as $category)
                                     <option value="{{ $category->id }}" {{ old('category_id', $car->category_id) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                                 @endforeach
@@ -97,17 +129,8 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Price (AED) *</label>
-                            <input type="number" name="price" value="{{ old('price', $car->price) }}" required
+                            <input type="number" name="price" value="{{ old('price', $car->price) }}" required min="0"
                                 class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
-                            <select name="condition" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                                <option value="new" {{ old('condition', $car->condition) == 'new' ? 'selected' : '' }}>New</option>
-                                <option value="used" {{ old('condition', $car->condition) == 'used' ? 'selected' : '' }}>Used</option>
-                                <option value="certified" {{ old('condition', $car->condition) == 'certified' ? 'selected' : '' }}>Certified Pre-Owned</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -435,6 +458,55 @@
         // Existing attribute values from the database
         const existingValues = @json($car->attributeValues->pluck('value', 'attribute_id'));
 
+        function carMakeModel() {
+            return {
+                selectedMakeId: '',
+                selectedMakeLabel: '',
+                selectedModel: '',
+                models: [],
+                
+                init() {
+                    // Initialize with existing values
+                    this.selectedMakeId = '{{ $currentMakeId }}';
+                    this.selectedMakeLabel = '{{ old('make', $car->make) }}';
+                    this.selectedModel = '{{ old('model', $car->model) }}';
+                    
+                    if (this.selectedMakeId) {
+                        this.fetchModels();
+                    }
+                },
+
+                async fetchModels() {
+                    this.models = [];
+                    // Update label based on selected ID
+                    const select = document.querySelector('select[x-model="selectedMakeId"]');
+                    if (select && select.selectedOptions[0]) {
+                        this.selectedMakeLabel = select.selectedOptions[0].getAttribute('data-label') || '';
+                    }
+
+                    if (!this.selectedMakeId) {
+                         // Only clear if we really have no selection (and not just initial load where DOM might be readying)
+                         // But for edit, we have ID.
+                         // If user clears it?
+                         if (!this.selectedMakeId && this.selectedMakeLabel) {
+                             // This mismatch shouldn't happen if they select "Select Make"
+                             this.selectedMakeLabel = '';
+                         }
+                         return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/attributes/models?make_id=${this.selectedMakeId}`);
+                        if (response.ok) {
+                            this.models = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch models:', error);
+                    }
+                }
+            }
+        }
+
         function locationSearch() {
             return {
                 searchQuery: '{{ old('city', $car->city) }}',
@@ -663,6 +735,17 @@
                 previewImages(event) {
                     this.imagePreviews = [];
                     const files = event.target.files;
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+
+                    for (let i = 0; i < files.length; i++) {
+                        if (files[i].size > maxSize) {
+                            alert(`File "${files[i].name}" is too large. Maximum size is 5MB.`);
+                            event.target.value = ''; // Clear input
+                            this.imagePreviews = [];
+                            return;
+                        }
+                    }
+
                     for (let i = 0; i < files.length; i++) {
                         const reader = new FileReader();
                         reader.onload = (e) => { this.imagePreviews.push(e.target.result); };

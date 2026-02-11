@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             SettingSeeder::class,
             UserSeeder::class,
+            DropdownOptionSeeder::class, // Added this line
             CarSeeder::class,
             TestimonialSeeder::class,
             FinancingPartnerSeeder::class,

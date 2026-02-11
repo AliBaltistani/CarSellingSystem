@@ -14,6 +14,7 @@ class DropdownOption extends Model
 
     // Dropdown type constants
     const TYPE_MAKE = 'make';
+    const TYPE_MODEL = 'model';
     const TYPE_CONDITION = 'condition';
     const TYPE_TRANSMISSION = 'transmission';
     const TYPE_FUEL_TYPE = 'fuel_type';
@@ -75,6 +76,7 @@ class DropdownOption extends Model
     {
         return [
             self::TYPE_MAKE => 'Car Makes (Brands)',
+            self::TYPE_MODEL => 'Car Models',
             self::TYPE_CONDITION => 'Vehicle Condition',
             self::TYPE_TRANSMISSION => 'Transmission Types',
             self::TYPE_FUEL_TYPE => 'Fuel Types',
@@ -86,6 +88,16 @@ class DropdownOption extends Model
             self::TYPE_SEATS => 'Number of Seats',
             self::TYPE_CYLINDERS => 'Number of Cylinders',
         ];
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(DropdownOption::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(DropdownOption::class, 'parent_id');
     }
 
     /**

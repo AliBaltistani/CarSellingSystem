@@ -60,7 +60,76 @@ class CarController extends Controller
         return view('admin.cars.create', compact('categories', 'dropdownOptions'));
     }
 
-    // ... store method ...
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string|min:50',
+                'price' => 'required|numeric|min:0',
+                'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+                'make' => 'required|string|max:100',
+                'model' => 'required|string|max:100',
+                'category_id' => 'required|exists:categories,id',
+                'condition' => 'required|in:new,used,certified',
+                'transmission' => 'required|in:automatic,manual,cvt,semi-automatic',
+                'fuel_type' => 'required|in:petrol,diesel,electric,hybrid,cng,lpg',
+                'mileage' => 'nullable|integer|min:0',
+                'body_type' => 'nullable|string|max:50',
+                'exterior_color' => 'nullable|string|max:50',
+                'interior_color' => 'nullable|string|max:50',
+                'doors' => 'nullable|integer|min:2|max:5',
+                'seats' => 'nullable|integer|min:1|max:12',
+                'whatsapp_number' => 'required|string|max:20',
+                'phone_number' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:100',
+                'country' => 'nullable|string|max:100',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
+                'status' => 'required|in:available,sold,pending,reserved',
+                'is_featured' => 'boolean',
+                'is_published' => 'boolean',
+                'negotiable' => 'boolean',
+                'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            ]);
+
+            $validated['user_id'] = auth()->id(); // Admin creates it, so it belongs to admin
+            $validated['is_featured'] = $request->boolean('is_featured');
+            $validated['is_published'] = $request->boolean('is_published');
+            $validated['negotiable'] = $request->boolean('negotiable');
+            
+            if ($validated['is_published']) {
+                $validated['published_at'] = now();
+            }
+
+
+            $car = Car::create($validated);
+
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    $path = $image->store('cars/' . $car->id, 'public');
+                    CarImage::create([
+                        'car_id' => $car->id,
+                        'path' => $path,
+                        'order' => $index,
+                        'is_primary' => $index === 0,
+                    ]);
+                }
+            }
+
+            // Save dynamic attribute values
+            if ($request->has('attributes')) {
+                CarAttributeValue::saveForCar($car, $request->input('attributes', []));
+            }
+
+            return redirect()->route('admin.cars.index')
+                ->with('success', 'Car created successfully!');
+        } catch (\Throwable $e) {
+            Log::error($e);
+            return redirect()->back()->with('error', 'Failed to create car: ' . $e->getMessage());
+        }
+    }
 
     // ... show method ...
 
@@ -78,6 +147,7 @@ class CarController extends Controller
     private function getDropdownOptions()
     {
         return [
+            'makes' => DropdownOption::byType(DropdownOption::TYPE_MAKE),
             'conditions' => DropdownOption::byType(DropdownOption::TYPE_CONDITION),
             'transmissions' => DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION),
             'fuel_types' => DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE),

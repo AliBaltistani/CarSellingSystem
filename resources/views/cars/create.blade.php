@@ -75,34 +75,41 @@
                             @enderror
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
-                            <input type="text" name="make" value="{{ old('make') }}" required
-                                placeholder="e.g., BMW, Mercedes, Toyota"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('make') border-red-500 @enderror">
-                            @error('make')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                        <div x-data="carMakeModel()">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
+                                    <select x-model="selectedMakeId" @change="fetchModels()" required
+                                        class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                        <option value="">Select Make</option>
+                                        @foreach($dropdownOptions['makes'] ?? [] as $option)
+                                            <option value="{{ $option->id }}" data-label="{{ $option->label }}" {{ old('make') == $option->label ? 'selected' : '' }}>{{ $option->label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="hidden" name="make" :value="selectedMakeLabel">
+                                </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
-                            <input type="text" name="model" value="{{ old('model') }}" required
-                                placeholder="e.g., X5, C-Class, Camry"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('model') border-red-500 @enderror">
-                            @error('model')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
+                                    <select name="model" required x-model="selectedModel" :disabled="!selectedMakeId"
+                                        class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400">
+                                        <option value="">Select Model</option>
+                                        <template x-for="model in models" :key="model.id">
+                                            <option :value="model.label" x-text="model.label"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
-                            <input type="number" name="year" value="{{ old('year') }}" required min="1900" max="{{ date('Y') + 1 }}"
-                                placeholder="e.g., 2023"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('year') border-red-500 @enderror">
-                            @error('year')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
+                                <select name="year" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                    <option value="">Select Year</option>
+                                    @for($i = date('Y') + 1; $i >= 1900; $i--)
+                                        <option value="{{ $i }}" {{ old('year') == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
                         </div>
 
                         <div>
@@ -164,8 +171,8 @@
                                 <select name="condition" required
                                     class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                                     <option value="">Select</option>
-                                    @foreach($dropdownOptions['conditions'] ?? [] as $value => $label)
-                                        <option value="{{ $value }}" {{ old('condition') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @foreach($dropdownOptions['conditions'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('condition') == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -175,8 +182,8 @@
                                 <select name="transmission" required
                                     class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                                     <option value="">Select</option>
-                                    @foreach($dropdownOptions['transmissions'] ?? [] as $value => $label)
-                                        <option value="{{ $value }}" {{ old('transmission') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @foreach($dropdownOptions['transmissions'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('transmission') == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -233,8 +240,8 @@
                                 <select name="doors"
                                     class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                                     <option value="">Select</option>
-                                    @foreach($dropdownOptions['doors'] ?? [] as $value => $label)
-                                        <option value="{{ $value }}" {{ old('doors') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @foreach($dropdownOptions['doors'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('doors') == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -244,8 +251,8 @@
                                 <select name="seats"
                                     class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                                     <option value="">Select</option>
-                                    @foreach($dropdownOptions['seats'] ?? [] as $value => $label)
-                                        <option value="{{ $value }}" {{ old('seats') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @foreach($dropdownOptions['seats'] ?? [] as $option)
+                                        <option value="{{ $option->value }}" {{ old('seats') == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -316,6 +323,7 @@
                             <input type="text" x-model="searchQuery"
                                 @input.debounce.400ms="searchLocations()"
                                 @focus="showResults = true"
+                                @keydown.enter.prevent
                                 placeholder="Search city..."
                                 class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
 
@@ -356,7 +364,7 @@
             <!-- Step 5: Photos -->
             <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
-                    <p class="text-slate-600 text-sm mb-4">Upload up to 10 high-quality images (max 5MB each)</p>
+                    <p class="text-slate-600 text-sm mb-4">Upload up to 10 high-quality images (max 2MB each)</p>
 
                     <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-amber-400 transition-colors">
                         <input type="file" name="images[]" multiple accept="image/*" id="images" class="hidden" @change="previewImages($event)">
@@ -365,7 +373,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <p class="mt-2 text-slate-600">Click to upload photos</p>
-                            <p class="text-sm text-slate-400">JPEG, PNG, WebP up to 5MB</p>
+                            <p class="text-sm text-slate-400">JPEG, PNG, WebP up to 2MB</p>
                         </label>
                     </div>
 
@@ -706,6 +714,27 @@
                 previewImages(event) {
                     this.imagePreviews = [];
                     const files = event.target.files;
+                    const maxSize = 2 * 1024 * 1024; // 2MB
+                    const maxTotalSize = 7.5 * 1024 * 1024; // 7.5MB to be safe within 8MB post_max_size
+
+                    let totalSize = 0;
+                    for (let i = 0; i < files.length; i++) {
+                        if (files[i].size > maxSize) {
+                            alert(`File "${files[i].name}" is too large. Maximum size is 2MB per image.`);
+                            event.target.value = ''; // Clear input
+                            this.imagePreviews = [];
+                            return;
+                        }
+                        totalSize += files[i].size;
+                    }
+
+                    if (totalSize > maxTotalSize) {
+                        alert(`Total file size exceeds the server limit. Please upload fewer images or compress them (Max total: 7.5MB).`);
+                        event.target.value = ''; // Clear input
+                        this.imagePreviews = [];
+                        return;
+                    }
+
                     for (let i = 0; i < files.length; i++) {
                         const reader = new FileReader();
                         reader.onload = (e) => {
@@ -725,6 +754,55 @@
             @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         `;
         document.head.appendChild(validationStyles);
+        function carMakeModel() {
+            return {
+                selectedMakeId: '',
+                selectedMakeLabel: '',
+                selectedModel: '',
+                models: [],
+                
+                init() {
+                    const oldMake = '{{ old('make') }}';
+                    if (oldMake) {
+                        this.$nextTick(() => {
+                            const options = document.querySelectorAll('select[x-model="selectedMakeId"] option');
+                            for (let option of options) {
+                                if (option.getAttribute('data-label') === oldMake) {
+                                    this.selectedMakeId = option.value;
+                                    this.selectedMakeLabel = oldMake;
+                                    this.fetchModels();
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                    this.selectedModel = '{{ old('model') }}';
+                },
+
+                async fetchModels() {
+                    this.models = [];
+                    const select = document.querySelector('select[x-model="selectedMakeId"]');
+                    if (select && select.selectedOptions[0]) {
+                        this.selectedMakeLabel = select.selectedOptions[0].getAttribute('data-label') || '';
+                    }
+
+                    if (!this.selectedMakeId) {
+                        this.selectedMakeLabel = '';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/attributes/models?make_id=${this.selectedMakeId}`);
+                        if (response.ok) {
+                            this.models = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch models:', error);
+                    }
+                }
+            }
+        }
+
         function locationSearch() {
             return {
                 searchQuery: '',
@@ -751,9 +829,16 @@
 
                     this.searching = true;
                     try {
-                        const response = await fetch(`/api/locations/combined?query=${encodeURIComponent(this.searchQuery)}`);
+                        const response = await fetch(`/api/locations/combined?q=${encodeURIComponent(this.searchQuery)}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
                         if (response.ok) {
                             this.results = await response.json();
+                        } else {
+                            console.error('Search failed:', response.status);
                         }
                     } catch (error) {
                         console.error('Search failed:', error);

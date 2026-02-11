@@ -12,6 +12,8 @@ use App\Models\DropdownOption;
 use App\Services\SeoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+
 
 class CarController extends Controller
 {
@@ -199,33 +201,51 @@ class CarController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $this->validateCarRequest($request);
-        $validated['user_id'] = auth()->id();
-        $validated['is_published'] = $request->boolean('is_published', true);
-        $validated['published_at'] = $validated['is_published'] ? now() : null;
+        try {
+            DB::beginTransaction();
 
-        $car = Car::create($validated);
+            $validated = $this->validateCarRequest($request);
+            $validated['user_id'] = auth()->id();
+            $validated['is_published'] = $request->boolean('is_published', true);
+            $validated['published_at'] = $validated['is_published'] ? now() : null;
 
-        // Handle image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('cars/' . $car->id, 'public');
-                CarImage::create([
-                    'car_id' => $car->id,
-                    'path' => $path,
-                    'order' => $index,
-                    'is_primary' => $index === 0,
-                ]);
+            $car = Car::create($validated);
+
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    if (!$image->isValid()) {
+                        throw new \Exception("Image {$index} failed to upload: " . $image->getErrorMessage());
+                    }
+                    
+                    $path = $image->store('cars/' . $car->id, 'public');
+                    CarImage::create([
+                        'car_id' => $car->id,
+                        'path' => $path,
+                        'order' => $index,
+                        'is_primary' => $index === 0,
+                    ]);
+                }
             }
-        }
 
-        // Save dynamic attribute values
-        if ($request->has('attributes')) {
-            CarAttributeValue::saveForCar($car, $request->input('attributes', []));
-        }
+            // Save dynamic attribute values
+            if ($request->has('attributes')) {
+                CarAttributeValue::saveForCar($car, $request->input('attributes', []));
+            }
 
-        return redirect()->route('cars.my-listings')
-            ->with('success', 'Your car listing has been created!');
+            DB::commit();
+
+            return redirect()->route('cars.my-listings')
+                ->with('success', 'Your car listing has been created!');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Car creation failed: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Failed to create car listing: ' . $e->getMessage()]);
+        }
     }
 
     public function edit(Car $car)
@@ -342,7 +362,8 @@ class CarController extends Controller
             'phone_number' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'images' => 'array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
     }
 }

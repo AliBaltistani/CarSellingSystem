@@ -9,54 +9,57 @@ class DropdownOptionSeeder extends Seeder
 {
     public function run(): void
     {
-        $options = [
-            // Car Makes
-            DropdownOption::TYPE_MAKE => [
-                ['label' => 'Toyota', 'order' => 1],
-                ['label' => 'Honda', 'order' => 2],
-                ['label' => 'BMW', 'order' => 3],
-                ['label' => 'Mercedes-Benz', 'slug' => 'mercedes-benz', 'order' => 4],
-                ['label' => 'Nissan', 'order' => 5],
-                ['label' => 'Ford', 'order' => 6],
-                ['label' => 'Chevrolet', 'order' => 7],
-                ['label' => 'Lexus', 'order' => 8],
-                ['label' => 'Porsche', 'order' => 9],
-                ['label' => 'Audi', 'order' => 10],
-                ['label' => 'Volkswagen', 'order' => 11],
-                ['label' => 'Hyundai', 'order' => 12],
-                ['label' => 'Kia', 'order' => 13],
-                ['label' => 'Mazda', 'order' => 14],
-                ['label' => 'Subaru', 'order' => 15],
-                ['label' => 'Jeep', 'order' => 16],
-                ['label' => 'Land Rover', 'slug' => 'land-rover', 'order' => 17],
-                ['label' => 'Range Rover', 'slug' => 'range-rover', 'order' => 18],
-                ['label' => 'Jaguar', 'order' => 19],
-                ['label' => 'Ferrari', 'order' => 20],
-                ['label' => 'Lamborghini', 'order' => 21],
-                ['label' => 'Bentley', 'order' => 22],
-                ['label' => 'Rolls-Royce', 'slug' => 'rolls-royce', 'order' => 23],
-                ['label' => 'Maserati', 'order' => 24],
-                ['label' => 'Aston Martin', 'slug' => 'aston-martin', 'order' => 25],
-                ['label' => 'Tesla', 'order' => 26],
-                ['label' => 'Volvo', 'order' => 27],
-                ['label' => 'Infiniti', 'order' => 28],
-                ['label' => 'Acura', 'order' => 29],
-                ['label' => 'GMC', 'order' => 30],
-                ['label' => 'Cadillac', 'order' => 31],
-                ['label' => 'Dodge', 'order' => 32],
-                ['label' => 'Chrysler', 'order' => 33],
-                ['label' => 'Mitsubishi', 'order' => 34],
-                ['label' => 'Suzuki', 'order' => 35],
-                ['label' => 'Peugeot', 'order' => 36],
-                ['label' => 'Renault', 'order' => 37],
-                ['label' => 'Fiat', 'order' => 38],
-                ['label' => 'Mini', 'order' => 39],
-                ['label' => 'Genesis', 'order' => 40],
-                ['label' => 'Lincoln', 'order' => 41],
-                ['label' => 'Buick', 'order' => 42],
-                ['label' => 'Other', 'order' => 99],
-            ],
+        // Car Makes & Models
+        $makes = [
+            'Toyota' => ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Land Cruiser', 'Prado', 'Yaris', 'Hilux', 'Fortuner', 'Avalon', 'Supra', '86'],
+            'Honda' => ['Civic', 'Accord', 'CR-V', 'Pilot', 'Odyssey', 'City', 'HR-V', 'Jazz', 'Ridgeline'],
+            'BMW' => ['3 Series', '5 Series', '7 Series', 'X1', 'X3', 'X5', 'X6', 'X7', 'M3', 'M4', 'M5', 'i8', 'iX'],
+            'Mercedes-Benz' => ['C-Class', 'E-Class', 'S-Class', 'A-Class', 'G-Class', 'GLE', 'GLC', 'GLS', 'CLA', 'CLS', 'AMG GT'],
+            'Nissan' => ['Patrol', 'Sunny', 'Altima', 'Maxima', 'X-Trail', 'Pathfinder', 'Kicks', 'Micra', 'GT-R', 'Z'],
+            'Ford' => ['F-Series', 'Mustang', 'Explorer', 'Edge', 'Escape', 'Expedition', 'Ranger', 'Bronco', 'Territory'],
+            'Chevrolet' => ['Tahoe', 'Suburban', 'Silverado', 'Camaro', 'Corvette', 'Malibu', 'Traverse', 'Blazer'],
+            'Lexus' => ['LX', 'ES', 'LS', 'IS', 'RX', 'GX', 'NX', 'UX', 'LC', 'RC'],
+            'Porsche' => ['911', 'Cayenne', 'Macan', 'Panamera', 'Taycan', '718 Boxster', '718 Cayman'],
+            'Audi' => ['A3', 'A4', 'A6', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron', 'R8', 'RS Q8'],
+            'Volkswagen' => ['Golf', 'Tiguan', 'Touareg', 'Passat', 'Teramont', 'Jetta', 'Arteon', 'ID.4'],
+            'Hyundai' => ['Tucson', 'Santa Fe', 'Elantra', 'Sonata', 'Accent', 'Creta', 'Palisade', 'Kona', 'Veloster'],
+            'Kia' => ['Sportage', 'Sorento', 'Telluride', 'Optima', 'K5', 'Picanto', 'Rio', 'Carnival', 'Seltos'],
+            'Mazda' => ['Mazda3', 'Mazda6', 'CX-5', 'CX-9', 'CX-30', 'MX-5 Miata'],
+            'Subaru' => ['Outback', 'Forester', 'Impreza', 'WRX', 'BRZ', 'Crosstrek'],
+            'Jeep' => ['Wrangler', 'Grand Cherokee', 'Cherokee', 'Compass', 'Gladiator', 'Renegade'],
+            'Land Rover' => ['Defender', 'Discovery', 'Range Rover', 'Range Rover Sport', 'Range Rover Velar', 'Range Rover Evoque'],
+            'Tesla' => ['Model S', 'Model 3', 'Model X', 'Model Y', 'Cybertruck'],
+            'Volvo' => ['XC90', 'XC60', 'XC40', 'S90', 'S60', 'V90', 'V60'],
+            'Mitsubishi' => ['Pajero', 'Outlander', 'Lancer', 'Eclipse Cross', 'ASX', 'Montero Sport'],
+            'Suzuki' => ['Jimny', 'Swift', 'Vitara', 'Grand Vitara', 'Baleno', 'Ciaz'],
+            'Other' => ['Other'],
+        ];
 
+        $order = 1;
+        foreach ($makes as $makeName => $models) {
+            $makeOption = DropdownOption::firstOrCreate(
+                ['type' => DropdownOption::TYPE_MAKE, 'slug' => \Illuminate\Support\Str::slug($makeName)],
+                ['label' => $makeName, 'value' => \Illuminate\Support\Str::slug($makeName), 'order' => $order++]
+            );
+
+            $modelOrder = 1;
+            foreach ($models as $modelName) {
+                DropdownOption::firstOrCreate(
+                    [
+                        'type' => DropdownOption::TYPE_MODEL, 
+                        'parent_id' => $makeOption->id,
+                        'slug' => \Illuminate\Support\Str::slug($modelName)
+                    ],
+                    [
+                        'label' => $modelName, 
+                        'value' => $modelName, // Models store name as value
+                        'order' => $modelOrder++
+                    ]
+                );
+            }
+        }
+
+        $otherOptions = [
             // Vehicle Condition
             DropdownOption::TYPE_CONDITION => [
                 ['label' => 'New', 'value' => 'new', 'order' => 1],
@@ -176,7 +179,7 @@ class DropdownOptionSeeder extends Seeder
             ],
         ];
 
-        foreach ($options as $type => $items) {
+        foreach ($otherOptions as $type => $items) {
             foreach ($items as $item) {
                 DropdownOption::updateOrCreate(
                     ['type' => $type, 'slug' => $item['slug'] ?? \Illuminate\Support\Str::slug($item['label'])],
