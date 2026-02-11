@@ -7,6 +7,7 @@ use App\Models\Car;
 use App\Models\CarAttributeValue;
 use App\Models\Category;
 use App\Models\CarImage;
+use App\Models\DropdownOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -55,82 +56,39 @@ class CarController extends Controller
     public function create()
     {
         $categories = Category::active()->orderBy('name')->get();
-        return view('admin.cars.create', compact('categories'));
+        $dropdownOptions = $this->getDropdownOptions();
+        return view('admin.cars.create', compact('categories', 'dropdownOptions'));
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|min:50',
-            'price' => 'required|numeric|min:0',
-            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'make' => 'required|string|max:100',
-            'model' => 'required|string|max:100',
-            'category_id' => 'required|exists:categories,id',
-            'condition' => 'required|in:new,used,certified',
-            'transmission' => 'required|in:automatic,manual,cvt,semi-automatic',
-            'fuel_type' => 'required|in:petrol,diesel,electric,hybrid,cng,lpg',
-            'mileage' => 'nullable|integer|min:0',
-            'body_type' => 'nullable|string|max:50',
-            'exterior_color' => 'nullable|string|max:50',
-            'interior_color' => 'nullable|string|max:50',
-            'doors' => 'nullable|integer|min:2|max:5',
-            'seats' => 'nullable|integer|min:1|max:12',
-            'whatsapp_number' => 'required|string|max:20',
-            'phone_number' => 'nullable|string|max:20',
-            'city' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'is_featured' => 'boolean',
-            'is_published' => 'boolean',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
+    // ... store method ...
 
-        $validated['user_id'] = auth()->id();
-        $validated['is_featured'] = $request->boolean('is_featured');
-        $validated['is_published'] = $request->boolean('is_published', true);
-
-        if ($validated['is_published']) {
-            $validated['published_at'] = now();
-        }
-
-        $car = Car::create($validated);
-
-        // Handle image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('cars/' . $car->id, 'public');
-                CarImage::create([
-                    'car_id' => $car->id,
-                    'path' => $path,
-                    'order' => $index,
-                    'is_primary' => $index === 0,
-                ]);
-            }
-        }
-
-        // Save dynamic attribute values
-        if ($request->has('attributes')) {
-            CarAttributeValue::saveForCar($car, $request->input('attributes', []));
-        }
-
-        return redirect()->route('admin.cars.index')
-            ->with('success', 'Car created successfully!');
-    }
-
-    public function show(Car $car)
-    {
-        $car->load(['category', 'user', 'images', 'inquiries']);
-        return view('admin.cars.show', compact('car'));
-    }
+    // ... show method ...
 
     public function edit(Car $car)
     {
         $categories = Category::active()->orderBy('name')->get();
+        $dropdownOptions = $this->getDropdownOptions();
         $car->load(['images', 'attributeValues']);
-        return view('admin.cars.edit', compact('car', 'categories'));
+        return view('admin.cars.edit', compact('car', 'categories', 'dropdownOptions'));
+    }
+
+    /**
+     * Get dropdown options for the form.
+     */
+    private function getDropdownOptions()
+    {
+        return [
+            'conditions' => DropdownOption::byType(DropdownOption::TYPE_CONDITION),
+            'transmissions' => DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION),
+            'fuel_types' => DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE),
+            'body_types' => DropdownOption::byType(DropdownOption::TYPE_BODY_TYPE),
+            'drivetrains' => DropdownOption::byType(DropdownOption::TYPE_DRIVETRAIN),
+            'exterior_colors' => DropdownOption::byType(DropdownOption::TYPE_EXTERIOR_COLOR),
+            'interior_colors' => DropdownOption::byType(DropdownOption::TYPE_INTERIOR_COLOR),
+            'doors' => DropdownOption::byType(DropdownOption::TYPE_DOORS),
+            'seats' => DropdownOption::byType(DropdownOption::TYPE_SEATS),
+            'cylinders' => DropdownOption::byType(DropdownOption::TYPE_CYLINDERS),
+        ];
     }
 
     public function update(Request $request, Car $car)

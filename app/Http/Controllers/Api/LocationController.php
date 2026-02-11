@@ -72,6 +72,7 @@ class LocationController extends Controller
             ->search($query)
             ->limit(5)
             ->get()
+            ->toBase()
             ->map(function ($location) {
                 return [
                     'id' => $location->id,

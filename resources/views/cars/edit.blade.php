@@ -1,387 +1,711 @@
 <x-layouts.public>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="carEditStepper()">
+
+        <!-- Step Indicator -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900">Edit Listing</h1>
-            <p class="text-slate-600 mt-1">Update your car listing details</p>
+            <div class="flex items-center justify-between relative">
+                <!-- Progress Line Background -->
+                <div class="absolute top-5 left-0 right-0 h-0.5 bg-slate-200 mx-10"></div>
+                <!-- Progress Line Active -->
+                <div class="absolute top-5 left-0 h-0.5 bg-teal-800 mx-10 transition-all duration-500"
+                    :style="'width: ' + ((currentStep - 1) / 4 * 100) + '%'"></div>
+
+                <template x-for="step in steps" :key="step.number">
+                    <div class="flex flex-col items-center relative z-10 cursor-pointer" @click="goToStep(step.number)">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300"
+                            :class="{
+                                'bg-teal-800 border-teal-800 text-white shadow-lg shadow-teal-800/30': currentStep === step.number,
+                                'bg-teal-800 border-teal-800 text-white': currentStep > step.number,
+                                'bg-white border-slate-300 text-slate-400': currentStep < step.number
+                            }">
+                            <template x-if="currentStep > step.number">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </template>
+                            <template x-if="currentStep <= step.number">
+                                <span x-text="step.number"></span>
+                            </template>
+                        </div>
+                        <span class="mt-2 text-xs font-medium hidden sm:block transition-colors"
+                            :class="currentStep >= step.number ? 'text-teal-800' : 'text-slate-400'"
+                            x-text="step.shortTitle"></span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Step Title -->
+            <div class="text-center mt-4">
+                <span class="text-sm font-semibold text-teal-800" x-text="steps[currentStep - 1].title"></span>
+            </div>
         </div>
 
-        <form action="{{ route('cars.update', $car) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+        <!-- Step Header Card -->
+        <div class="bg-teal-800 rounded-xl p-5 mb-6">
+            <h1 class="text-xl font-bold text-white" x-text="steps[currentStep - 1].heading"></h1>
+            <p class="text-teal-200 text-sm mt-1" x-text="steps[currentStep - 1].description"></p>
+        </div>
+
+        <!-- Validation Errors Summary -->
+        @if($errors->any())
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+                <p class="font-semibold text-sm mb-1">Please fix the following errors:</p>
+                <ul class="text-sm list-disc list-inside">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('cars.update', $car) }}" method="POST" enctype="multipart/form-data" id="car-edit-form">
             @csrf
             @method('PUT')
 
-            <!-- Basic Info -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">Basic Information</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Title *</label>
-                        <input type="text" name="title" value="{{ old('title', $car->title) }}" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('title') border-red-500 @enderror">
-                        @error('title')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
-                        <input type="text" name="make" value="{{ old('make', $car->make) }}" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
-                        <input type="text" name="model" value="{{ old('model', $car->model) }}" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
-                        <input type="number" name="year" value="{{ old('year', $car->year) }}" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Category *</label>
-                        <select name="category_id" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ old('category_id', $car->category_id) == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Price (AED) *</label>
-                        <input type="number" name="price" value="{{ old('price', $car->price) }}" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
-                        <select name="condition" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                            @foreach($dropdownOptions['conditions'] ?? [] as $option)
-                                <option value="{{ $option->value }}" {{ old('condition', $car->condition) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Specifications -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">Specifications</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Mileage (km)</label>
-                        <input type="number" name="mileage" value="{{ old('mileage', $car->mileage) }}"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Transmission *</label>
-                        <select name="transmission" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            @foreach($dropdownOptions['transmissions'] ?? [] as $option)
-                                <option value="{{ $option->value }}" {{ old('transmission', $car->transmission) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Fuel Type *</label>
-                        <select name="fuel_type" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            @foreach($dropdownOptions['fuelTypes'] ?? [] as $option)
-                                <option value="{{ $option->value }}" {{ old('fuel_type', $car->fuel_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Body Type</label>
-                        <select name="body_type" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="">Select</option>
-                            @foreach($dropdownOptions['bodyTypes'] ?? [] as $option)
-                                <option value="{{ $option->value }}" {{ old('body_type', $car->body_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Exterior Color</label>
-                        <select name="exterior_color" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                            <option value="">Select</option>
-                            @foreach($dropdownOptions['exteriorColors'] ?? [] as $option)
-                                <option value="{{ $option->value }}" {{ old('exterior_color', $car->exterior_color) == $option->value ? 'selected' : '' }}
-                                    @if($option->color) style="background: {{ $option->color }}15;" @endif>
-                                    {{ $option->label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dynamic Attributes Section -->
-            <div id="dynamic-attributes-section" class="hidden">
+            <!-- Step 1: Basic Information -->
+            <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-slate-900">Custom Specifications</h2>
-                        <span id="attributes-loading" class="hidden text-sm text-slate-500">
-                            <svg class="animate-spin h-4 w-4 inline mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Loading...
-                        </span>
-                    </div>
-                    <div id="dynamic-attributes-container">
-                        <!-- Attributes will be loaded here dynamically -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Title *</label>
+                            <input type="text" name="title" value="{{ old('title', $car->title) }}" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('title') border-red-500 @enderror">
+                            @error('title')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Make *</label>
+                            <input type="text" name="make" value="{{ old('make', $car->make) }}" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Model *</label>
+                            <input type="text" name="model" value="{{ old('model', $car->model) }}" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Year *</label>
+                            <input type="number" name="year" value="{{ old('year', $car->year) }}" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Category *</label>
+                            <select name="category_id" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id', $car->category_id) == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Price (AED) *</label>
+                            <input type="number" name="price" value="{{ old('price', $car->price) }}" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Condition *</label>
+                            <select name="condition" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                @foreach($dropdownOptions['conditions'] ?? [] as $option)
+                                    <option value="{{ $option->value }}" {{ old('condition', $car->condition) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <script>
-                // Existing attribute values from the database
-                const existingValues = @json($car->attributeValues->pluck('value', 'attribute_id'));
+            <!-- Step 2: Specifications -->
+            <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Mileage (km)</label>
+                            <input type="number" name="mileage" value="{{ old('mileage', $car->mileage) }}"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                        </div>
 
-                document.addEventListener('DOMContentLoaded', function() {
-                    const categorySelect = document.querySelector('select[name="category_id"]');
-                    const section = document.getElementById('dynamic-attributes-section');
-                    const container = document.getElementById('dynamic-attributes-container');
-                    const loading = document.getElementById('attributes-loading');
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Transmission *</label>
+                            <select name="transmission" required class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                @foreach($dropdownOptions['transmissions'] ?? [] as $option)
+                                    <option value="{{ $option->value }}" {{ old('transmission', $car->transmission) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    async function loadAttributes(categoryId, skipLoading = false) {
-                        if (!categoryId) {
-                            section.classList.add('hidden');
-                            container.innerHTML = '';
-                            return;
-                        }
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Fuel Type *</label>
+                            <select name="fuel_type" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select</option>
+                                @foreach($dropdownOptions['fuel_types'] ?? [] as $option)
+                                    <option value="{{ $option->value }}" {{ old('fuel_type', $car->fuel_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                        section.classList.remove('hidden');
-                        if (!skipLoading) {
-                            loading.classList.remove('hidden');
-                            container.innerHTML = '';
-                        }
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Body Type</label>
+                            <select name="body_type"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select</option>
+                                @foreach($dropdownOptions['body_types'] ?? [] as $option)
+                                    <option value="{{ $option->value }}" {{ old('body_type', $car->body_type) == $option->value ? 'selected' : '' }}>{{ $option->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                        try {
-                            const response = await fetch(`/api/categories/${categoryId}/attributes`);
-                            const groups = await response.json();
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Exterior Color</label>
+                            <select name="exterior_color"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">Select</option>
+                                @foreach($dropdownOptions['exterior_colors'] ?? [] as $option)
+                                    <option value="{{ $option->value }}" {{ old('exterior_color', $car->exterior_color) == $option->value ? 'selected' : '' }}
+                                        @if($option->color) style="background: {{ $option->color }}15;" @endif>
+                                        {{ $option->label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-                            if (groups.length === 0) {
-                                section.classList.add('hidden');
-                            } else {
-                                container.innerHTML = renderAttributeGroups(groups);
-                            }
-                        } catch (error) {
-                            console.error('Error loading attributes:', error);
-                            container.innerHTML = '<p class="text-red-500 text-sm">Error loading attributes.</p>';
-                        }
+                <!-- Dynamic Attributes Section -->
+                <div id="dynamic-attributes-section" class="hidden mt-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-slate-900">Custom Specifications</h2>
+                            <span id="attributes-loading" class="hidden text-sm text-slate-500">
+                                <svg class="animate-spin h-4 w-4 inline mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Loading...
+                            </span>
+                        </div>
+                        <div id="dynamic-attributes-container">
+                            <!-- Attributes will be loaded here dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        loading.classList.add('hidden');
-                    }
+            <!-- Step 3: Description -->
+            <div x-show="currentStep === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Description * (min 50 characters)</label>
+                        <textarea name="description" rows="8" required minlength="50"
+                            placeholder="Describe your car in detail. Include history, features, condition, reason for selling, etc."
+                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">{{ old('description', $car->description) }}</textarea>
+                        <p class="mt-2 text-xs text-slate-400">Tip: A detailed description helps attract more buyers. Mention the car's history, maintenance record, and any special features.</p>
+                    </div>
+                </div>
+            </div>
 
-                    categorySelect.addEventListener('change', function() {
-                        loadAttributes(this.value);
-                    });
+            <!-- Step 4: Contact Information -->
+            <div x-show="currentStep === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number *</label>
+                            <input type="text" name="whatsapp_number" value="{{ old('whatsapp_number', $car->whatsapp_number) }}" required
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                        </div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+                            <input type="text" name="phone_number" value="{{ old('phone_number', $car->phone_number) }}"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
+                        </div>
 
-                    // Load attributes on page load for existing car
-                    if (categorySelect.value) {
-                        loadAttributes(categorySelect.value, true);
-                    }
-                });
+                        <!-- Location Search -->
+                        <div class="col-span-1 md:col-span-2 relative" x-data="locationSearch()">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Location (City) *</label>
+                            <input type="text" x-model="searchQuery"
+                                @input.debounce.400ms="searchLocations()"
+                                @focus="showResults = true"
+                                placeholder="Search city..."
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
 
-                function renderAttributeGroups(groups) {
-                    return groups.map(group => `
-                        <div class="mb-6 last:mb-0">
-                            <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                                <span>${group.group_icon}</span>
-                                ${group.group}
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                ${group.attributes.map(attr => renderAttributeField(attr)).join('')}
+                            <input type="hidden" name="city" x-bind:value="selectedCity">
+                            <input type="hidden" name="country" x-bind:value="selectedCountry">
+
+                            <div x-show="showResults && (results.length > 0 || searching)" x-transition @click.away="showResults = false"
+                                class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                                <template x-if="searching">
+                                    <div class="px-4 py-3 text-slate-500 text-center">Searching...</div>
+                                </template>
+                                <template x-for="result in results" :key="result.display_name">
+                                    <button type="button" @click="selectLocation(result)"
+                                        class="w-full px-4 py-3 text-left hover:bg-amber-50 border-b border-slate-100 last:border-0">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="font-medium text-slate-900" x-text="result.city"></span>
+                                                <span class="text-sm text-slate-500" x-text="', ' + result.country"></span>
+                                            </div>
+                                            <span x-show="result.source === 'db'" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Saved</span>
+                                            <span x-show="result.source === 'api'" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">New</span>
+                                        </div>
+                                    </button>
+                                </template>
+                                <template x-if="!searching && results.length === 0 && searchQuery.length >= 2">
+                                    <div class="px-4 py-3 text-slate-500 text-center">No locations found</div>
+                                </template>
+                            </div>
+
+                            <div x-show="selectedCity" class="mt-2 text-sm text-green-600">
+                                Selected: <span x-text="selectedCity + ', ' + selectedCountry"></span>
                             </div>
                         </div>
-                    `).join('<hr class="my-6 border-slate-200">');
-                }
-
-                function renderAttributeField(attr) {
-                    const required = attr.is_required ? 'required' : '';
-                    const requiredMark = attr.is_required ? ' *' : '';
-                    const fieldName = `attributes[${attr.id}]`;
-                    const existingValue = existingValues[attr.id] || attr.default_value || '';
-
-                    let input = '';
-
-                    switch (attr.type) {
-                        case 'text':
-                            input = `<input type="text" name="${fieldName}" value="${existingValue}" ${required}
-                                placeholder="${attr.placeholder || ''}"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
-                            break;
-                        case 'textarea':
-                            input = `<textarea name="${fieldName}" rows="3" ${required}
-                                placeholder="${attr.placeholder || ''}"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">${existingValue}</textarea>`;
-                            break;
-                        case 'number':
-                            input = `<div class="relative">
-                                ${attr.prefix ? `<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">${attr.prefix}</span>` : ''}
-                                <input type="number" name="${fieldName}" value="${existingValue}" ${required}
-                                    placeholder="${attr.placeholder || ''}"
-                                    step="${attr.step || 'any'}"
-                                    ${attr.min_value !== null ? `min="${attr.min_value}"` : ''}
-                                    ${attr.max_value !== null ? `max="${attr.max_value}"` : ''}
-                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm ${attr.prefix ? 'pl-12' : ''} ${attr.suffix ? 'pr-12' : ''}">
-                                ${attr.suffix ? `<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">${attr.suffix}</span>` : ''}
-                            </div>`;
-                            break;
-                        case 'select':
-                            input = `<select name="${fieldName}" ${required}
-                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">
-                                <option value="">Select...</option>
-                                ${attr.options.map(opt => `<option value="${opt.value}" ${existingValue === opt.value || (!existingValue && opt.is_default) ? 'selected' : ''}>${opt.label}</option>`).join('')}
-                            </select>`;
-                            break;
-                        case 'multiselect':
-                            const selectedValues = existingValue ? (typeof existingValue === 'string' ? JSON.parse(existingValue || '[]') : existingValue) : [];
-                            input = `<div class="space-y-2 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-lg">
-                                ${attr.options.map(opt => `
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" name="${fieldName}[]" value="${opt.value}" ${selectedValues.includes(opt.value) || (!existingValue && opt.is_default) ? 'checked' : ''}
-                                            class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
-                                        <span class="text-sm text-slate-700">${opt.label}</span>
-                                    </label>
-                                `).join('')}
-                            </div>`;
-                            break;
-                        case 'boolean':
-                            const isTrue = existingValue === '1' || existingValue === 1 || existingValue === true;
-                            input = `<div class="flex items-center gap-3 pt-2">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="${fieldName}" value="1" ${isTrue ? 'checked' : ''}
-                                        class="w-4 h-4 border-slate-300 text-amber-500 focus:ring-amber-500">
-                                    <span class="text-sm text-slate-700">Yes</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="${fieldName}" value="0" ${!isTrue ? 'checked' : ''}
-                                        class="w-4 h-4 border-slate-300 text-amber-500 focus:ring-amber-500">
-                                    <span class="text-sm text-slate-700">No</span>
-                                </label>
-                            </div>`;
-                            break;
-                        case 'date':
-                            input = `<input type="date" name="${fieldName}" value="${existingValue}" ${required}
-                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
-                            break;
-                        case 'color':
-                            input = `<div class="flex flex-wrap gap-2 pt-2">
-                                ${attr.options.map(opt => `
-                                    <label class="cursor-pointer group">
-                                        <input type="radio" name="${fieldName}" value="${opt.value}" class="sr-only peer" ${existingValue === opt.value || (!existingValue && opt.is_default) ? 'checked' : ''}>
-                                        <span class="block w-8 h-8 rounded-full border-2 border-slate-200 peer-checked:border-amber-500 peer-checked:ring-2 peer-checked:ring-amber-200"
-                                            style="background-color: ${opt.color || opt.value}" title="${opt.label}"></span>
-                                    </label>
-                                `).join('')}
-                            </div>`;
-                            break;
-                        case 'range':
-                            const rangeValue = existingValue || attr.default_value || Math.round(((attr.min_value || 0) + (attr.max_value || 100)) / 2);
-                            input = `<div class="space-y-2">
-                                <input type="range" name="${fieldName}" value="${rangeValue}"
-                                    min="${attr.min_value || 0}" max="${attr.max_value || 100}" step="${attr.step || 1}"
-                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                                    oninput="this.nextElementSibling.textContent = this.value">
-                                <div class="text-center text-sm text-slate-600">${rangeValue}</div>
-                            </div>`;
-                            break;
-                        default:
-                            input = `<input type="text" name="${fieldName}" value="${existingValue}" ${required}
-                                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
-                    }
-
-                    return `
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
-                                ${attr.icon ? `<span class="mr-1">${attr.icon}</span>` : ''}
-                                ${attr.name}${requiredMark}
-                            </label>
-                            ${input}
-                            ${attr.help_text ? `<p class="mt-1 text-xs text-slate-500">${attr.help_text}</p>` : ''}
-                        </div>
-                    `;
-                }
-            </script>
-
-            <!-- Description -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">Description</h2>
-                <textarea name="description" rows="6" required minlength="50"
-                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">{{ old('description', $car->description) }}</textarea>
-            </div>
-
-            <!-- Contact Info -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">Contact Information</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number *</label>
-                        <input type="text" name="whatsapp_number" value="{{ old('whatsapp_number', $car->whatsapp_number) }}" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
-                        <input type="text" name="phone_number" value="{{ old('phone_number', $car->phone_number) }}"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">City</label>
-                        <input type="text" name="city" value="{{ old('city', $car->city) }}"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Country</label>
-                        <input type="text" name="country" value="{{ old('country', $car->country) }}"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
                     </div>
                 </div>
             </div>
 
-            <!-- Current Images -->
-            @if($car->images->count() > 0)
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">Current Photos</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    @foreach($car->images as $image)
-                        <div class="relative group">
-                            <img src="{{ $image->url }}" alt="" class="w-full h-24 object-cover rounded-lg">
-                            @if($image->is_primary)
-                                <span class="absolute top-1 left-1 px-2 py-0.5 bg-amber-500 text-white text-xs rounded">Primary</span>
-                            @endif
-                        </div>
-                    @endforeach
+            <!-- Step 5: Photos -->
+            <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <!-- Current Images -->
+                @if($car->images->count() > 0)
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-4">Current Photos</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach($car->images as $image)
+                            <div class="relative group">
+                                <img src="{{ $image->url }}" alt="" class="w-full h-24 object-cover rounded-lg">
+                                @if($image->is_primary)
+                                    <span class="absolute top-1 left-1 px-2 py-0.5 bg-amber-500 text-white text-xs rounded">Primary</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                <!-- Add More Images -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-4">Add More Photos</h2>
+                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-amber-400 transition-colors">
+                        <input type="file" name="images[]" multiple accept="image/*" id="images" class="hidden" @change="previewImages($event)">
+                        <label for="images" class="cursor-pointer">
+                            <svg class="w-12 h-12 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <p class="mt-2 text-slate-600">Click to upload photos</p>
+                            <p class="text-sm text-slate-400">JPEG, PNG, WebP up to 5MB</p>
+                        </label>
+                    </div>
+
+                    <!-- New Image Previews -->
+                    <div x-show="imagePreviews.length > 0" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <template x-for="(src, index) in imagePreviews" :key="index">
+                            <div class="relative group">
+                                <img :src="src" class="w-full h-24 object-cover rounded-lg border border-slate-200">
+                                <span class="absolute top-1 right-1 px-2 py-0.5 bg-emerald-500 text-white text-xs rounded">New</span>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
-            @endif
 
-            <!-- Add More Images -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">Add More Photos</h2>
-                <input type="file" name="images[]" multiple accept="image/*" 
-                    class="w-full px-4 py-3 border border-slate-200 rounded-lg">
-            </div>
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-8">
+                <div>
+                    <button type="button" x-show="currentStep > 1"
+                        @click="prevStep()"
+                        class="inline-flex items-center px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg transition-colors shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Back
+                    </button>
+                </div>
 
-            <!-- Submit -->
-            <div class="flex justify-end gap-4">
-                <a href="{{ route('cars.my-listings') }}" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors">
-                    Cancel
-                </a>
-                <button type="submit" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/25">
-                    Update Listing
-                </button>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('cars.my-listings') }}" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors">
+                        Cancel
+                    </a>
+
+                    <button type="button" x-show="currentStep < 5"
+                        @click="nextStep()"
+                        class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-teal-700 to-teal-800 hover:from-teal-800 hover:to-teal-900 text-white font-semibold rounded-lg transition-all shadow-lg shadow-teal-800/25">
+                        Next Step
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+
+                    <button type="submit" x-show="currentStep === 5"
+                        class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/25">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Update Listing
+                    </button>
+                </div>
             </div>
         </form>
     </div>
+
+    <script>
+        // Existing attribute values from the database
+        const existingValues = @json($car->attributeValues->pluck('value', 'attribute_id'));
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const categorySelect = document.querySelector('select[name="category_id"]');
+            const section = document.getElementById('dynamic-attributes-section');
+            const container = document.getElementById('dynamic-attributes-container');
+            const loading = document.getElementById('attributes-loading');
+
+            async function loadAttributes(categoryId, skipLoading = false) {
+                if (!categoryId) {
+                    section.classList.add('hidden');
+                    container.innerHTML = '';
+                    return;
+                }
+
+                section.classList.remove('hidden');
+                if (!skipLoading) {
+                    loading.classList.remove('hidden');
+                    container.innerHTML = '';
+                }
+
+                try {
+                    const response = await fetch(`/api/categories/${categoryId}/attributes`);
+                    const groups = await response.json();
+
+                    if (groups.length === 0) {
+                        section.classList.add('hidden');
+                    } else {
+                        container.innerHTML = renderAttributeGroups(groups);
+                    }
+                } catch (error) {
+                    console.error('Error loading attributes:', error);
+                    container.innerHTML = '<p class="text-red-500 text-sm">Error loading attributes.</p>';
+                }
+
+                loading.classList.add('hidden');
+            }
+
+            categorySelect.addEventListener('change', function() {
+                loadAttributes(this.value);
+            });
+
+            // Load attributes on page load for existing car
+            if (categorySelect.value) {
+                loadAttributes(categorySelect.value, true);
+            }
+        });
+
+        function renderAttributeGroups(groups) {
+            return groups.map(group => `
+                <div class="mb-6 last:mb-0">
+                    <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <span>${group.group_icon}</span>
+                        ${group.group}
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${group.attributes.map(attr => renderAttributeField(attr)).join('')}
+                    </div>
+                </div>
+            `).join('<hr class="my-6 border-slate-200">');
+        }
+
+        function renderAttributeField(attr) {
+            const required = attr.is_required ? 'required' : '';
+            const requiredMark = attr.is_required ? ' *' : '';
+            const fieldName = `attributes[${attr.id}]`;
+            const existingValue = existingValues[attr.id] || attr.default_value || '';
+
+            let input = '';
+
+            switch (attr.type) {
+                case 'text':
+                    input = `<input type="text" name="${fieldName}" value="${existingValue}" ${required}
+                        placeholder="${attr.placeholder || ''}"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
+                    break;
+                case 'textarea':
+                    input = `<textarea name="${fieldName}" rows="3" ${required}
+                        placeholder="${attr.placeholder || ''}"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">${existingValue}</textarea>`;
+                    break;
+                case 'number':
+                    input = `<div class="relative">
+                        ${attr.prefix ? `<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">${attr.prefix}</span>` : ''}
+                        <input type="number" name="${fieldName}" value="${existingValue}" ${required}
+                            placeholder="${attr.placeholder || ''}"
+                            step="${attr.step || 'any'}"
+                            ${attr.min_value !== null ? `min="${attr.min_value}"` : ''}
+                            ${attr.max_value !== null ? `max="${attr.max_value}"` : ''}
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm ${attr.prefix ? 'pl-12' : ''} ${attr.suffix ? 'pr-12' : ''}">
+                        ${attr.suffix ? `<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">${attr.suffix}</span>` : ''}
+                    </div>`;
+                    break;
+                case 'select':
+                    input = `<select name="${fieldName}" ${required}
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">
+                        <option value="">Select...</option>
+                        ${attr.options.map(opt => `<option value="${opt.value}" ${existingValue === opt.value || (!existingValue && opt.is_default) ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                    </select>`;
+                    break;
+                case 'multiselect':
+                    const selectedValues = existingValue ? (typeof existingValue === 'string' ? JSON.parse(existingValue || '[]') : existingValue) : [];
+                    input = `<div class="space-y-2 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-lg">
+                        ${attr.options.map(opt => `
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="${fieldName}[]" value="${opt.value}" ${selectedValues.includes(opt.value) || (!existingValue && opt.is_default) ? 'checked' : ''}
+                                    class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+                                <span class="text-sm text-slate-700">${opt.label}</span>
+                            </label>
+                        `).join('')}
+                    </div>`;
+                    break;
+                case 'boolean':
+                    const isTrue = existingValue === '1' || existingValue === 1 || existingValue === true;
+                    input = `<div class="flex items-center gap-3 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="${fieldName}" value="1" ${isTrue ? 'checked' : ''}
+                                class="w-4 h-4 border-slate-300 text-amber-500 focus:ring-amber-500">
+                            <span class="text-sm text-slate-700">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="${fieldName}" value="0" ${!isTrue ? 'checked' : ''}
+                                class="w-4 h-4 border-slate-300 text-amber-500 focus:ring-amber-500">
+                            <span class="text-sm text-slate-700">No</span>
+                        </label>
+                    </div>`;
+                    break;
+                case 'date':
+                    input = `<input type="date" name="${fieldName}" value="${existingValue}" ${required}
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
+                    break;
+                case 'color':
+                    input = `<div class="flex flex-wrap gap-2 pt-2">
+                        ${attr.options.map(opt => `
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="${fieldName}" value="${opt.value}" class="sr-only peer" ${existingValue === opt.value || (!existingValue && opt.is_default) ? 'checked' : ''}>
+                                <span class="block w-8 h-8 rounded-full border-2 border-slate-200 peer-checked:border-amber-500 peer-checked:ring-2 peer-checked:ring-amber-200"
+                                    style="background-color: ${opt.color || opt.value}" title="${opt.label}"></span>
+                            </label>
+                        `).join('')}
+                    </div>`;
+                    break;
+                case 'range':
+                    const rangeValue = existingValue || attr.default_value || Math.round(((attr.min_value || 0) + (attr.max_value || 100)) / 2);
+                    input = `<div class="space-y-2">
+                        <input type="range" name="${fieldName}" value="${rangeValue}"
+                            min="${attr.min_value || 0}" max="${attr.max_value || 100}" step="${attr.step || 1}"
+                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                            oninput="this.nextElementSibling.textContent = this.value">
+                        <div class="text-center text-sm text-slate-600">${rangeValue}</div>
+                    </div>`;
+                    break;
+                default:
+                    input = `<input type="text" name="${fieldName}" value="${existingValue}" ${required}
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">`;
+            }
+
+            return `
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        ${attr.icon ? `<span class="mr-1">${attr.icon}</span>` : ''}
+                        ${attr.name}${requiredMark}
+                    </label>
+                    ${input}
+                    ${attr.help_text ? `<p class="mt-1 text-xs text-slate-500">${attr.help_text}</p>` : ''}
+                </div>
+            `;
+        }
+
+        function carEditStepper() {
+            return {
+                currentStep: 1,
+                imagePreviews: [],
+                validationErrors: [],
+                steps: [
+                    { number: 1, shortTitle: 'Basic Info', title: 'Basic Information', heading: 'Update your car details', description: 'Edit the basic information like make, model, year, and price' },
+                    { number: 2, shortTitle: 'Specifications', title: 'Specifications', heading: 'Car Specifications', description: 'Update technical details and specifications of your vehicle' },
+                    { number: 3, shortTitle: 'Description', title: 'Description', heading: 'Update description', description: 'Revise your car description to attract more buyers' },
+                    { number: 4, shortTitle: 'Contact', title: 'Contact Information', heading: 'Your contact details', description: 'Update your contact information for interested buyers' },
+                    { number: 5, shortTitle: 'Photos', title: 'Manage Photos', heading: 'Update your car photos', description: 'Review existing photos and add new ones' },
+                ],
+
+                validateStep(step) {
+                    this.validationErrors = [];
+                    const stepEl = document.querySelector(`[x-show="currentStep === ${step}"]`);
+                    if (!stepEl) return true;
+
+                    const requiredFields = stepEl.querySelectorAll('[required]');
+                    let isValid = true;
+
+                    requiredFields.forEach(field => {
+                        field.classList.remove('border-red-500', 'ring-red-500');
+                        const errorMsg = field.parentElement.querySelector('.step-error');
+                        if (errorMsg) errorMsg.remove();
+
+                        let fieldValid = true;
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            const name = field.getAttribute('name');
+                            const checked = stepEl.querySelectorAll(`[name="${name}"]:checked`);
+                            fieldValid = checked.length > 0;
+                        } else if (field.tagName === 'SELECT') {
+                            fieldValid = field.value !== '';
+                        } else {
+                            fieldValid = field.value.trim() !== '';
+                            if (fieldValid && field.minLength > 0 && field.value.trim().length < field.minLength) {
+                                fieldValid = false;
+                                this.validationErrors.push(`${field.previousElementSibling?.textContent?.trim() || 'Field'} must be at least ${field.minLength} characters`);
+                            }
+                        }
+
+                        if (!fieldValid) {
+                            isValid = false;
+                            field.classList.add('border-red-500', 'ring-red-500');
+                            field.style.animation = 'shake 0.5s ease-in-out';
+                            setTimeout(() => field.style.animation = '', 500);
+                            const label = field.closest('div')?.querySelector('label');
+                            const fieldName = label?.textContent?.trim()?.replace(' *', '') || 'This field';
+                            if (!this.validationErrors.find(e => e.includes(fieldName))) {
+                                this.validationErrors.push(`${fieldName} is required`);
+                            }
+                        }
+                    });
+
+                    if (!isValid) this.showValidationToast();
+                    return isValid;
+                },
+
+                showValidationToast() {
+                    const existing = document.getElementById('validation-toast');
+                    if (existing) existing.remove();
+                    const toast = document.createElement('div');
+                    toast.id = 'validation-toast';
+                    toast.className = 'fixed top-4 right-4 z-50 bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl shadow-2xl max-w-sm';
+                    toast.style.animation = 'slideIn 0.3s ease-out';
+                    toast.innerHTML = `<div class="flex items-start gap-3"><svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div><p class="font-semibold text-sm">Please fill in required fields</p><ul class="text-xs mt-1 space-y-0.5">${this.validationErrors.map(e => `<li>• ${e}</li>`).join('')}</ul></div></div>`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
+                },
+
+                nextStep() {
+                    if (this.currentStep < 5 && this.validateStep(this.currentStep)) {
+                        this.currentStep++;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+
+                prevStep() {
+                    if (this.currentStep > 1) {
+                        this.currentStep--;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+
+                goToStep(step) {
+                    if (step > this.currentStep) {
+                        for (let i = this.currentStep; i < step; i++) {
+                            if (!this.validateStep(i)) return;
+                        }
+                    }
+                    this.currentStep = step;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                previewImages(event) {
+                    this.imagePreviews = [];
+                    const files = event.target.files;
+                    for (let i = 0; i < files.length; i++) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.imagePreviews.push(e.target.result);
+                        };
+                        reader.readAsDataURL(files[i]);
+                    }
+                }
+            }
+        }
+
+        // Validation animations
+        const validationStyles = document.createElement('style');
+        validationStyles.textContent = `
+            @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+            @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        `;
+        document.head.appendChild(validationStyles);
+        function locationSearch() {
+            return {
+                searchQuery: '',
+                results: [],
+                showResults: false,
+                searching: false,
+                selectedCity: '',
+                selectedCountry: '',
+
+                init() {
+                    // Initialize with old values or existing car data
+                    this.selectedCity = '{{ old('city', $car->city) }}';
+                    this.selectedCountry = '{{ old('country', $car->country) }}';
+                    if (this.selectedCity) {
+                        this.searchQuery = this.selectedCity;
+                    }
+                },
+
+                async searchLocations() {
+                    if (this.searchQuery.length < 2) {
+                        this.results = [];
+                        return;
+                    }
+
+                    this.searching = true;
+                    try {
+                        const response = await fetch(`/api/locations/combined?query=${encodeURIComponent(this.searchQuery)}`);
+                        if (response.ok) {
+                            this.results = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Search failed:', error);
+                    } finally {
+                        this.searching = false;
+                    }
+                },
+
+                async selectLocation(result) {
+                    this.selectedCity = result.city;
+                    this.selectedCountry = result.country;
+                    this.searchQuery = result.city; // Display city in input
+                    this.showResults = false;
+
+                    // If it's a new location from API, save it to DB
+                    if (result.source === 'api') {
+                        try {
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                            await fetch('/api/locations/create', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    city: result.city,
+                                    country: result.country,
+                                    latitude: result.latitude,
+                                    longitude: result.longitude
+                                })
+                            });
+                        } catch (error) {
+                            console.error('Failed to save location:', error);
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </x-layouts.public>
