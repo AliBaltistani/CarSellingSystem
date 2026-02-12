@@ -18,19 +18,39 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'settings' => 'required|array',
-            'settings.*' => 'nullable|string',
+            'settings' => 'nullable|array',
+            'settings.*' => 'nullable',
+            'site_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'site_favicon' => 'nullable|image|mimes:png,ico,svg|max:1024',
         ]);
 
-        foreach ($validated['settings'] as $key => $value) {
-            $setting = Setting::where('key', $key)->first();
-            if ($setting) {
-                $setting->update(['value' => $value]);
-                Cache::forget("setting.{$key}");
+        // Handle File Uploads
+        $fileKeys = ['site_logo', 'site_favicon'];
+        
+        foreach ($fileKeys as $key) {
+            if ($request->hasFile($key)) {
+                $file = $request->file($key);
+                $path = $file->store('settings', 'public');
+                
+                Setting::set($key, $path, 'string', 'general');
             }
         }
 
-        // Clear group caches
+        // Handle Text Settings
+        if (isset($validated['settings'])) {
+            foreach ($validated['settings'] as $key => $value) {
+                // Skip if key is in fileKeys to avoid overwriting with null/string if not uploaded
+                if (in_array($key, $fileKeys)) continue;
+
+                $setting = Setting::where('key', $key)->first();
+                if ($setting) {
+                    $setting->update(['value' => $value]);
+                    Cache::forget("setting.{$key}");
+                }
+            }
+        }
+
+        // Clear all caches
         Setting::clearCache();
 
         return back()->with('success', 'Settings updated successfully!');

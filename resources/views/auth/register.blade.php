@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Create Account - {{ config('app.name', 'XenonMotors') }}</title>
+    <title>Create Account - {{ $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -23,14 +23,18 @@
             <div class="relative z-10 flex flex-col justify-center px-12 lg:px-16 xl:px-24">
                 <!-- Logo -->
                 <a href="{{ route('home') }}" class="inline-flex items-center space-x-3 mb-12 group">
-                    <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25 transform group-hover:scale-105 transition-transform">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
+                    @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                         <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? 'Logo' }}" class="h-14 w-auto">
+                    @else
+                        <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25 transform group-hover:scale-105 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                    @endif
                     <div>
-                        <span class="block text-2xl font-bold text-white">XenonMotors</span>
-                        <span class="block text-sm text-slate-400">UAE's Premium Car Marketplace</span>
+                        <span class="block text-2xl font-bold text-white">{{ $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }}</span>
+                        <span class="block text-sm text-slate-400">{{ $globalSettings['site_description'] ?? "UAE's Premium Car Marketplace" }}</span>
                     </div>
                 </a>
 
@@ -83,17 +87,21 @@
                 <!-- Mobile Logo -->
                 <div class="lg:hidden text-center mb-8">
                     <a href="{{ route('home') }}" class="inline-flex items-center space-x-3">
-                        <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-slate-900">XenonMotors</span>
+                        @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                            <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? 'Logo' }}" class="h-12 w-auto">
+                        @else
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                        @endif
+                        <span class="text-2xl font-bold text-slate-900">{{ $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }}</span>
                     </a>
                 </div>
 
                 <h2 class="text-3xl font-bold text-slate-900 mb-2">Create your account</h2>
-                <p class="text-slate-500 mb-8">Join XenonMotors today - it's free!</p>
+                <p class="text-slate-500 mb-8">Join {{ $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }} today - it's free!</p>
 
                 <form method="POST" action="{{ route('register') }}">
                     @csrf

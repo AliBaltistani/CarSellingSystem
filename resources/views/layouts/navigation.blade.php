@@ -6,7 +6,9 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                        @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                            <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? '' }}" class="block h-9 w-auto">
+                        @endif
                     </a>
                 </div>
 

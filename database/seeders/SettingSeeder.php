@@ -10,6 +10,10 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
+            // Branding
+            ['key' => 'site_logo', 'value' => null, 'type' => 'string', 'group' => 'general'],
+            ['key' => 'site_favicon', 'value' => null, 'type' => 'string', 'group' => 'general'],
+
             // General Settings
             ['key' => 'site_name', 'value' => 'Xenon Motors', 'type' => 'string', 'group' => 'general'],
             ['key' => 'site_tagline', 'value' => 'Buy and Sell Quality Cars', 'type' => 'string', 'group' => 'general'],
@@ -53,7 +57,10 @@ class SettingSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            Setting::create($setting);
+            Setting::updateOrCreate(
+                ['key' => $setting['key']],
+                $setting
+            );
         }
     }
 }

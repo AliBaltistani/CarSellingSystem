@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'XenonMotors') }}</title>
+    <title>{{ $globalSettings['site_name'] ?? config('app.name') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -13,6 +13,10 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    @if(isset($globalSettings['site_favicon']))
+        <link rel="icon" href="{{ Storage::url($globalSettings['site_favicon']) }}" type="image/x-icon"/>
+    @endif
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-slate-50">
@@ -24,12 +28,10 @@
                     <div class="flex items-center">
                         <!-- Logo -->
                         <a href="{{ route('home') }}" class="flex items-center space-x-3 group">
-                            <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25 transform group-hover:scale-105 transition-transform">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                            </div>
-                            <span class="text-xl font-bold text-slate-900 hidden sm:block">XenonMotors</span>
+                            @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                                <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? '' }}" class="h-10 w-auto">
+                            @endif
+                            <span class="text-xl font-bold text-slate-900 hidden sm:block">{{ $globalSettings['site_name'] ?? '' }}</span>
                         </a>
 
                         <!-- Desktop Navigation -->
@@ -202,12 +204,12 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <div class="flex items-center space-x-3 mb-4 md:mb-0">
-                        <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
+                        <div class="w-8 h-8 flex items-center justify-center">
+                            @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                                <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="Logo" class="w-8 h-8 object-contain">
+                            @endif
                         </div>
-                        <span class="text-slate-600">© {{ date('Y') }} XenonMotors. All rights reserved.</span>
+                        <span class="text-slate-600">© {{ date('Y') }} {{ $globalSettings['site_name'] ?? '' }}. All rights reserved.</span>
                     </div>
                     <div class="flex space-x-6 text-sm text-slate-500">
                         <a href="{{ route('home') }}" class="hover:text-amber-600">Home</a>

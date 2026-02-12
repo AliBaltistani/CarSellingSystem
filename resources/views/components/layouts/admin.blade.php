@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Admin' }} - {{ config('app.name') }}</title>
+    <title>{{ $title ?? 'Admin' }} - {{ $globalSettings['site_name'] ?? config('app.name') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    @if(isset($globalSettings['site_favicon']))
+        <link rel="icon" href="{{ Storage::url($globalSettings['site_favicon']) }}" type="image/x-icon"/>
+    @endif
     
     <!-- Quill Rich Text Editor CSS -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
@@ -37,12 +41,10 @@
             <!-- Logo -->
             <div class="h-16 flex items-center px-6 border-b border-slate-800 flex-shrink-0">
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-bold text-white">Admin Panel</span>
+                    @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                        <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? '' }}" class="h-8 w-auto">
+                    @endif
+                    <span class="text-lg font-bold text-white">{{ $globalSettings['site_name'] ?? 'Admin Panel' }}</span>
                 </a>
             </div>
 

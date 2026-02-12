@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $seo['title'] ?? config('app.name', 'Xenon Motors') }}</title>
-    <meta name="description" content="{{ $seo['description'] ?? 'Find your perfect car at Xenon Motors' }}">
-    <meta name="keywords" content="{{ $seo['keywords'] ?? 'cars, buy car, sell car' }}">
+    <title>{{ $seo['title'] ?? $globalSettings['meta_title'] ?? $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }}</title>
+    <meta name="description" content="{{ $seo['description'] ?? $globalSettings['meta_description'] ?? 'Find your perfect car with us' }}">
+    <meta name="keywords" content="{{ $seo['keywords'] ?? $globalSettings['meta_keywords'] ?? 'cars, buy car, sell car' }}">
     
     <!-- Open Graph -->
     <meta property="og:title" content="{{ $seo['title'] ?? config('app.name') }}">
@@ -74,11 +74,21 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14">
                 <!-- Logo -->
-                <a href="{{ route('home') }}" class="flex items-center">
-                    <span class="text-2xl font-black">
-                        <span class="text-blue-400 italic">X</span><span class="text-white italic">enon</span>
-                    </span>
-                    <span class="text-yellow-400 text-sm font-medium ml-1 -mt-2">motors</span>
+                <!-- Logo -->
+                <a href="{{ route('home') }}" class="flex items-center space-x-2">
+                    @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                        <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? 'Logo' }}" class="h-10 w-auto">
+                    @else
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-black leading-none">
+                                <span class="text-blue-400 italic">X</span><span class="text-white italic">enon</span>
+                            </span>
+                            <span class="text-yellow-400 text-sm font-medium leading-none">motors</span>
+                        </div>
+                    @endif
+                    @if(isset($globalSettings['site_name']) && $globalSettings['site_name'])
+                        <span class="text-xl font-bold text-white ml-2">{{ $globalSettings['site_name'] }}</span>
+                    @endif
                 </a>
 
                 <!-- Contact Info -->
@@ -394,12 +404,16 @@
                 <!-- Column 1: Company Info -->
                 <div>
                     <a href="{{ route('home') }}" class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold text-white">Xenon<span class="text-amber-400">Motors</span></span>
+                        @if(isset($globalSettings['site_logo']) && $globalSettings['site_logo'])
+                            <img src="{{ Storage::url($globalSettings['site_logo']) }}" alt="{{ $globalSettings['site_name'] ?? 'Logo' }}" class="h-10 w-auto">
+                        @else
+                            <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                        @endif
+                        <!-- <span class="text-xl font-bold text-white">{{ $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }}</span> -->
                     </a>
                     <p class="text-sm text-slate-400 mb-4">
                         Your trusted platform for buying and selling quality cars. Find your perfect vehicle today.
@@ -481,7 +495,7 @@
             <!-- Bottom Bar -->
             <div class="border-t border-slate-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
                 <p class="text-slate-500 text-sm">
-                    &copy; {{ date('Y') }} Xenon Motors. All rights reserved.
+                    &copy; {{ date('Y') }} {{ $globalSettings['site_name'] ?? config('app.name', 'CarSellingSystem') }}. All rights reserved.
                 </p>
                 <div class="flex items-center space-x-4 mt-4 md:mt-0">
                     <span class="text-sm text-slate-500">Secure Payments</span>

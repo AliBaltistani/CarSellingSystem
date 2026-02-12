@@ -22,5 +22,15 @@ class AppServiceProvider extends ServiceProvider
     {
         // Set default string length for MySQL utf8mb4 compatibility
         Schema::defaultStringLength(191);
+
+        // Share settings with all views
+        try {
+            if (Schema::hasTable('settings')) {
+                $settings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
+                view()->share('globalSettings', $settings);
+            }
+        } catch (\Exception $e) {
+            // Migrations might not be run yet
+        }
     }
 }
