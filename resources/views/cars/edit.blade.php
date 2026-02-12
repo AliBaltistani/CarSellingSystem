@@ -308,44 +308,17 @@
 
 
                         <!-- Location Search -->
-                        <div class="col-span-1 md:col-span-2 relative" x-data="locationSearch()">
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Location (City) *</label>
-                            <input type="text" x-model="searchQuery"
-                                @input.debounce.400ms="searchLocations()"
-                                @focus="showResults = true"
-                                @keydown.enter.prevent
+                        <!-- Location Search -->
+                        <div class="col-span-1 md:col-span-2">
+                            <x-forms.location-search 
+                                name="city" 
+                                label="Location (City)"
                                 placeholder="Search city..."
-                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500">
-
-                            <input type="hidden" name="city" x-bind:value="selectedCity">
-                            <input type="hidden" name="country" x-bind:value="selectedCountry">
-
-                            <div x-show="showResults && (results.length > 0 || searching)" x-transition @click.away="showResults = false"
-                                class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
-                                <template x-if="searching">
-                                    <div class="px-4 py-3 text-slate-500 text-center">Searching...</div>
-                                </template>
-                                <template x-for="result in results" :key="result.display_name">
-                                    <button type="button" @click="selectLocation(result)"
-                                        class="w-full px-4 py-3 text-left hover:bg-amber-50 border-b border-slate-100 last:border-0">
-                                        <div class="flex items-center justify-between">
-                                            <div>
-                                                <span class="font-medium text-slate-900" x-text="result.city"></span>
-                                                <span class="text-sm text-slate-500" x-text="', ' + result.country"></span>
-                                            </div>
-                                            <span x-show="result.source === 'db'" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Saved</span>
-                                            <span x-show="result.source === 'api'" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">New</span>
-                                        </div>
-                                    </button>
-                                </template>
-                                <template x-if="!searching && results.length === 0 && searchQuery.length >= 2">
-                                    <div class="px-4 py-3 text-slate-500 text-center">No locations found</div>
-                                </template>
-                            </div>
-
-                            <div x-show="selectedCity" class="mt-2 text-sm text-green-600">
-                                Selected: <span x-text="selectedCity + ', ' + selectedCountry"></span>
-                            </div>
+                                required="true"
+                                :value="old('city', $car->city)"
+                                :latitude="$car->latitude"
+                                :longitude="$car->longitude"
+                            />
                         </div>
                     </div>
                 </div>
@@ -828,48 +801,6 @@
                 selectedCity: '',
                 selectedCountry: '',
 
-                init() {
-                    // Initialize with old values or existing car data
-                    this.selectedCity = '{{ old('city', $car->city) }}';
-                    this.selectedCountry = '{{ old('country', $car->country) }}';
-                    
-                    if (this.selectedCity) {
-                        this.searchQuery = this.selectedCity;
-                    }
-                },
 
-                async searchLocations() {
-                    if (this.searchQuery.length < 2) {
-                        this.results = [];
-                        return;
-                    }
-
-                    this.searching = true;
-                    try {
-                        const response = await fetch(`/api/locations/combined?q=${encodeURIComponent(this.searchQuery)}`, {
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        if (response.ok) {
-                            this.results = await response.json();
-                        } else {
-                            console.error('Search failed:', response.status);
-                        }
-                    } catch (error) {
-                        console.error('Search failed:', error);
-                    }
-                    this.searching = false;
-                },
-
-                selectLocation(result) {
-                    this.selectedCity = result.city;
-                    this.selectedCountry = result.country;
-                    this.searchQuery = result.city;
-                    this.showResults = false;
-                }
-            }
-        }
     </script>
 </x-layouts.public>

@@ -39,11 +39,17 @@ class LocationController extends Controller
             if ($response->successful()) {
                 return collect($response->json())->map(function ($item) {
                     return [
+                        'place_id' => $item['place_id'],
                         'display_name' => $item['display_name'],
-                        'name' => $item['name'] ?? $item['display_name'],
-                        'city' => $item['address']['city'] ?? $item['address']['town'] ?? $item['address']['village'] ?? null,
-                        'state' => $item['address']['state'] ?? null,
+                        'name' => $item['name'] ?? explode(',', $item['display_name'])[0],
+                        'city' => $item['address']['city'] ?? $item['address']['town'] ?? $item['address']['village'] ?? $item['address']['hamlet'] ?? null,
+                        'state' => $item['address']['state'] ?? $item['address']['province'] ?? null,
                         'country' => $item['address']['country'] ?? null,
+                        'county' => $item['address']['county'] ?? $item['address']['district'] ?? null,
+                        'road' => $item['address']['road'] ?? null,
+                        'house_number' => $item['address']['house_number'] ?? null,
+                        'neighbourhood' => $item['address']['neighbourhood'] ?? $item['address']['suburb'] ?? null,
+                        'postcode' => $item['address']['postcode'] ?? null,
                         'lat' => $item['lat'],
                         'lon' => $item['lon'],
                     ];
@@ -80,6 +86,15 @@ class LocationController extends Controller
                     'state' => $location->state,
                     'country' => $location->country,
                     'display_name' => $location->formatted_name,
+                    'name' => $location->city,
+                    'city' => $location->city,
+                    'state' => $location->state,
+                    'country' => $location->country,
+                    'county' => null,
+                    'road' => null,
+                    'house_number' => null,
+                    'neighbourhood' => null,
+                    'postcode' => null,
                     'lat' => $location->latitude,
                     'lon' => $location->longitude,
                     'source' => 'db',
@@ -159,15 +174,20 @@ class LocationController extends Controller
             if ($response->successful()) {
                 return collect($response->json())->map(function ($item) {
                     return [
+                        'place_id' => $item['place_id'],
                         'display_name' => $item['display_name'],
-                        'city' => $item['address']['city'] ?? $item['address']['town'] ?? $item['address']['village'] ?? $item['name'] ?? null,
-                        'state' => $item['address']['state'] ?? null,
+                        'name' => $item['name'] ?? explode(',', $item['display_name'])[0],
+                        'city' => $item['address']['city'] ?? $item['address']['town'] ?? $item['address']['village'] ?? $item['address']['hamlet'] ?? null,
+                        'state' => $item['address']['state'] ?? $item['address']['province'] ?? null,
                         'country' => $item['address']['country'] ?? null,
+                        'county' => $item['address']['county'] ?? $item['address']['district'] ?? null,
+                        'road' => $item['address']['road'] ?? null,
+                        'house_number' => $item['address']['house_number'] ?? null,
+                        'neighbourhood' => $item['address']['neighbourhood'] ?? $item['address']['suburb'] ?? null,
+                        'postcode' => $item['address']['postcode'] ?? null,
                         'lat' => $item['lat'],
                         'lon' => $item['lon'],
                     ];
-                })->filter(function ($item) {
-                    return !empty($item['city']);
                 })->toArray();
             }
 
