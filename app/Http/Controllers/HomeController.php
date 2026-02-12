@@ -46,7 +46,7 @@ class HomeController extends Controller
         // Get dropdown options from admin-managed database
         $makes = DropdownOption::byType(DropdownOption::TYPE_MAKE);
         $conditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION);
-        $years = range(date('Y') + 1, 1990); // Generate years dynamically
+        $years = range(date('Y') + 1, 1900); // Generate years dynamically
 
         // Fetch testimonials
         $testimonials = Testimonial::getDisplayTestimonials(6);

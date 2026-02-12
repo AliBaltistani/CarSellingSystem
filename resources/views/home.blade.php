@@ -98,19 +98,58 @@
                                            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                                 </div>
                                 <div class="max-h-48 overflow-y-auto">
-                                    <button type="button" @click="selectedMake = ''; search = ''; open = false; searchCars()" 
+                                    <button type="button" @click="selectedMake = ''; selectedMakeId = null; models = []; selectedModel = ''; search = ''; open = false; searchCars()" 
                                             class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
                                         All Makes
                                     </button>
                                     @foreach($makes ?? [] as $make)
                                     <button type="button" 
                                             x-show="!search || '{{ strtolower($make->label) }}'.includes(search.toLowerCase())"
-                                            @click="selectedMake = '{{ $make->value }}'; search = ''; open = false; searchCars()" 
+                                            @click="selectedMake = '{{ $make->value }}'; selectedMakeId = '{{ $make->id }}'; fetchModels(); search = ''; open = false; searchCars()" 
                                             class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
                                             :class="selectedMake === '{{ $make->value }}' ? 'bg-teal-50 text-teal-700' : ''">
                                         {{ $make->label }}
                                     </button>
                                     @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Model Dropdown - Searchable (Dynamic) -->
+                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200" 
+                             x-data="{ open: false, search: '' }"
+                             @click.away="open = false">
+                            <button type="button" @click="if(selectedMake) open = !open" 
+                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between"
+                                :class="!selectedMake ? 'cursor-not-allowed opacity-60' : ''">
+                                <span x-text="selectedModel || 'Select Model'" :class="selectedModel ? 'text-slate-700' : 'text-slate-500'"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open && selectedMake" x-transition 
+                                 class="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 z-[100] rounded-b-lg overflow-hidden">
+                                <div class="p-2 border-b border-slate-100">
+                                    <input type="text" x-model="search" placeholder="Search model..." 
+                                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                </div>
+                                <div class="max-h-48 overflow-y-auto">
+                                    <button type="button" @click="selectedModel = ''; search = ''; open = false; searchCars()" 
+                                            class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-500">
+                                        All Models
+                                    </button>
+                                    <template x-for="model in models" :key="model.id">
+                                        <button type="button" 
+                                                x-show="!search || model.label.toLowerCase().includes(search.toLowerCase())"
+                                                @click="selectedModel = model.label; search = ''; open = false; searchCars()" 
+                                                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+                                                :class="selectedModel === model.label ? 'bg-teal-50 text-teal-700' : ''"
+                                                x-text="model.label">
+                                        </button>
+                                    </template>
+                                    <div x-show="models.length === 0" class="px-4 py-2 text-sm text-slate-500 italic">
+                                        No models found
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -623,6 +662,9 @@
                 suggestionsOpen: false,
                 searching: false,
                 selectedMake: '',
+                selectedMakeId: null, // Added for API call
+                selectedModel: '', // Added for Model selection
+                models: [], // Added for Model list
                 selectedYear: '',
                 selectedCondition: '',
                 selectedCarId: null,
@@ -634,6 +676,24 @@
                     @endforeach
                 },
                 
+                async fetchModels() {
+                    this.models = [];
+                    this.selectedModel = ''; // Reset model when make changes
+                    
+                    if (!this.selectedMakeId) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/attributes/models?make_id=${this.selectedMakeId}`);
+                        if (response.ok) {
+                            this.models = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch models:', error);
+                    }
+                },
+
                 async searchCars() {
                     this.searching = true;
                     this.suggestionsOpen = true;
@@ -647,6 +707,9 @@
                         }
                         if (this.selectedMake) {
                             params.append('make', this.selectedMake);
+                        }
+                        if (this.selectedModel) {
+                            params.append('model', this.selectedModel);
                         }
                         if (this.selectedYear) {
                             params.append('year', this.selectedYear);
@@ -766,6 +829,10 @@
                     
                     if (this.selectedMake) {
                         params.append('make', this.selectedMake);
+                    }
+                    
+                    if (this.selectedModel) {
+                        params.append('model', this.selectedModel);
                     }
                     
                     if (this.selectedYear) {
