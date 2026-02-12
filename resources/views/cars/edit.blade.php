@@ -792,14 +792,6 @@
             }
         }
 
-       function locationSearch() {
-            return {
-                searchQuery: '',
-                results: [],
-                showResults: false,
-                searching: false,
-                selectedCity: '',
-                selectedCountry: '',
 
 
     </script>

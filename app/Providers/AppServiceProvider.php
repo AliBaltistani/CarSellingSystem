@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Share settings with all views
         try {
+            \Illuminate\Support\Facades\Log::info('Request: ' . request()->fullUrl() . ' | Previous: ' . url()->previous());
             if (Schema::hasTable('settings')) {
                 $settings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
                 view()->share('globalSettings', $settings);
