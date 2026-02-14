@@ -2,17 +2,34 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
+
+    /**
+     * Check if the user has verified their email address.
+     * When email verification is disabled in admin settings, always return true.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        // Check if email verification is enabled in admin settings
+        // Setting::get() returns a real bool for boolean-type settings
+        $verificationEnabled = Setting::get('email_verification_enabled', false);
+
+        if (!$verificationEnabled) {
+            return true; // Bypass verification when disabled
+        }
+
+        return !is_null($this->email_verified_at);
+    }
 
     /**
      * The attributes that are mass assignable.

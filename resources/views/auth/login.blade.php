@@ -9,6 +9,11 @@
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+    <meta name="description" content="{{ $globalSettings['meta_description'] ?? 'Sign in to your account' }}">
+
+    @if(isset($globalSettings['site_favicon']) && $globalSettings['site_favicon'])
+        <link rel="icon" href="{{ Storage::url($globalSettings['site_favicon']) }}" type="image/x-icon"/>
+    @endif
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

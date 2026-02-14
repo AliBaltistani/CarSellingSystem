@@ -108,6 +108,26 @@
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Site Description</label>
                                 <textarea name="settings[site_description]" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-shadow resize-none">{{ $settings->get('general', collect())->firstWhere('key', 'site_description')->value ?? '' }}</textarea>
                             </div>
+
+                            {{-- Email Verification Toggle --}}
+                            <div class="md:col-span-2 pt-4 border-t border-slate-100" x-data="{ enabled: {{ \App\Models\Setting::get('email_verification_enabled', false) ? 'true' : 'false' }} }">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700">Email Verification</label>
+                                        <p class="text-sm text-slate-500 mt-0.5">Require users to verify their email address after registration</p>
+                                    </div>
+                                    <div>
+                                        <input type="hidden" name="settings[email_verification_enabled]" x-ref="emailVerificationInput" :value="enabled ? '1' : '0'"
+                                            x-effect="if($refs.emailVerificationInput) $refs.emailVerificationInput.value = enabled ? '1' : '0'">
+                                        <button type="button" @click="enabled = !enabled"
+                                            :class="enabled ? 'bg-amber-500' : 'bg-slate-300'"
+                                            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
+                                            <span :class="enabled ? 'translate-x-6' : 'translate-x-1'"
+                                                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

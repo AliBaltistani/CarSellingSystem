@@ -18,6 +18,7 @@ class MailSettingsSeeder extends Seeder
             ['key' => 'mail_encryption', 'value' => 'tls', 'type' => 'string', 'group' => 'mail'],
             ['key' => 'mail_from_address', 'value' => '', 'type' => 'string', 'group' => 'mail'],
             ['key' => 'mail_from_name', 'value' => '', 'type' => 'string', 'group' => 'mail'],
+            ['key' => 'email_verification_enabled', 'value' => '0', 'type' => 'boolean', 'group' => 'general'],
         ];
 
         foreach ($mailSettings as $setting) {
