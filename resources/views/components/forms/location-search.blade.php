@@ -132,6 +132,22 @@
             selectedLon: config.longitude || null,
             selectedDisplayName: '',
 
+            init() {
+                // Listen for external location set (e.g. from geolocation auto-detect)
+                window.addEventListener('set-location', (e) => {
+                    const d = e.detail;
+                    if (d) {
+                        this.selectedCity = d.city || '';
+                        this.selectedState = d.state || '';
+                        this.selectedCountry = d.country || '';
+                        this.selectedLat = d.lat || null;
+                        this.selectedLon = d.lon || null;
+                        this.selectedDisplayName = d.display_name || '';
+                        this.searchQuery = d.display_name || d.city || '';
+                    }
+                });
+            },
+
             async searchLocations() {
                 if (this.searchQuery.length < 2) {
                     this.results = [];

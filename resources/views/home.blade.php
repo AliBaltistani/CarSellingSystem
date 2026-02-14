@@ -69,23 +69,23 @@
         </div>
 
         <!-- Centered Search Box -->
-        <div class="absolute inset-0 flex items-center justify-center z-30 px-4">
-            <div class="w-full max-w-5xl" x-data="carSearchForm()">
+        <div class="absolute inset-0 flex items-center justify-center z-30 px-3 sm:px-4">
+            <div class="w-full max-w-5xl" x-data="carSearchForm()" x-init="initGeoLocation()">
                 <!-- Title -->
-                <h1 class="text-center text-3xl md:text-4xl lg:text-5xl font-light text-white mb-8 italic">
+                <h1 class="text-center text-lg sm:text-xl md:text-4xl lg:text-5xl font-light text-white mb-3 sm:mb-4 md:mb-8 italic leading-tight">
                     Explore Our Selection Of Luxury Vehicles
                 </h1>
                 
                 <!-- Search Form Container -->
-                <div class="bg-white rounded-lg shadow-2xl ">
-                    <!-- Top Row: Filter Dropdowns (Make | Year | Condition) -->
-                    <div class="flex flex-col md:flex-row bg-slate-50">
+                <div class="bg-white rounded-lg shadow-2xl">
+                    <!-- Top Row: Filter Dropdowns (Make | Model | Year | Condition) -->
+                    <div class="grid grid-cols-2 md:flex md:flex-row bg-slate-50 rounded-t-lg">
                         <!-- Make Dropdown - Searchable -->
-                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200" 
+                        <div class="flex-1 relative border-b md:border-b-0 border-r border-slate-200" 
                              x-data="{ open: false, search: '' }"
                              @click.away="open = false">
                             <button type="button" @click="open = !open" 
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
+                                class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-xs sm:text-sm text-left flex items-center justify-between">
                                 <span x-text="selectedMake || 'Select Make'" :class="selectedMake ? 'text-slate-700' : 'text-slate-500'"></span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -120,7 +120,7 @@
                              x-data="{ open: false, search: '' }"
                              @click.away="open = false">
                             <button type="button" @click="if(selectedMake) open = !open" 
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between"
+                                class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-xs sm:text-sm text-left flex items-center justify-between"
                                 :class="!selectedMake ? 'cursor-not-allowed opacity-60' : ''">
                                 <span x-text="selectedModel || 'Select Model'" :class="selectedModel ? 'text-slate-700' : 'text-slate-500'"></span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,11 +155,11 @@
                         </div>
 
                         <!-- Year Dropdown - Searchable -->
-                        <div class="flex-1 relative border-b md:border-b-0 md:border-r border-slate-200" 
+                        <div class="flex-1 relative border-b md:border-b-0 border-r md:border-r border-slate-200" 
                              x-data="{ open: false, search: '' }"
                              @click.away="open = false">
                             <button type="button" @click="open = !open" 
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
+                                class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-xs sm:text-sm text-left flex items-center justify-between">
                                 <span x-text="selectedYear || 'Select Year'" :class="selectedYear ? 'text-slate-700' : 'text-slate-500'"></span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -190,11 +190,11 @@
                         </div>
 
                         <!-- Condition Dropdown - Searchable -->
-                        <div class="flex-1 relative" 
+                        <div class="flex-1 relative border-b md:border-b-0" 
                              x-data="{ open: false, search: '' }"
                              @click.away="open = false">
                             <button type="button" @click="open = !open" 
-                                class="w-full px-4 py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-sm text-left flex items-center justify-between">
+                                class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-transparent border-0 text-slate-700 cursor-pointer focus:outline-none focus:ring-0 text-xs sm:text-sm text-left flex items-center justify-between">
                                 <span x-text="conditionLabels[selectedCondition] || 'Condition'" :class="selectedCondition ? 'text-slate-700' : 'text-slate-500'"></span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -228,7 +228,7 @@
                     <!-- Bottom Row: Location | Search Input | Button -->
                     <div class="flex flex-col md:flex-row border-t border-slate-200">
                         <!-- Location Input -->
-                        <div class="relative md:w-64 border-b md:border-b-0 md:border-r border-slate-200"
+                        <div class="relative w-full md:w-64 border-b md:border-b-0 md:border-r border-slate-200"
                              @location-selected.window="selectedCity = $event.detail.city; selectedLat = $event.detail.lat; selectedLon = $event.detail.lon"
                              @location-cleared.window="selectedCity = ''; selectedLat = null; selectedLon = null">
                             <x-forms.location-search 
@@ -240,24 +240,24 @@
 
                         <!-- Search Input with Live Suggestions -->
                         <div class="flex-1 relative" @click.away="suggestionsOpen = false">
-                            <div class="flex items-center px-4 py-4">
+                            <div class="flex items-center px-3 sm:px-4 py-3 sm:py-4">
                                 <input type="text" x-model="searchQuery" 
                                     @input.debounce.300ms="searchCars()" 
                                     @focus="if(suggestions.length) suggestionsOpen = true"
                                     placeholder="Find Cars, Mobile Phones and more..."
-                                    class="flex-1 bg-transparent border-0 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 p-0">
+                                    class="flex-1 bg-transparent border-0 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 p-0 text-sm sm:text-base">
                             </div>
                             
                             <!-- Search Suggestions Dropdown -->
                             <div x-show="suggestionsOpen && (suggestions.length > 0 || searching)" x-transition
-                                class="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 z-[100] max-h-80 overflow-y-auto rounded-b-lg">
+                                class="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 z-[100] max-h-60 sm:max-h-80 overflow-y-auto rounded-b-lg">
                                 <template x-for="car in suggestions" :key="car.id">
                                     <button @click="selectSuggestion(car)" type="button" 
-                                        class="w-full flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-left">
-                                        <img :src="car.image" :alt="car.title" class="w-14 h-14 object-cover rounded-lg mr-4 flex-shrink-0">
+                                        class="w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-left">
+                                        <img :src="car.image" :alt="car.title" class="w-10 h-10 sm:w-14 sm:h-14 object-cover rounded-lg mr-3 sm:mr-4 flex-shrink-0">
                                         <div class="flex-1 min-w-0">
-                                            <p class="font-semibold text-slate-900 truncate" x-text="car.title"></p>
-                                            <p class="text-blue-600 font-bold" x-text="car.price"></p>
+                                            <p class="font-semibold text-slate-900 truncate text-sm" x-text="car.title"></p>
+                                            <p class="text-blue-600 font-bold text-sm" x-text="car.price"></p>
                                             <p class="text-xs text-slate-500" x-text="car.category + (car.city ? ' · ' + car.city : '')"></p>
                                         </div>
                                     </button>
@@ -270,10 +270,11 @@
 
                         <!-- Search Button -->
                         <button @click="submitSearch()" type="button"
-                            class="px-6 py-4 bg-teal-700 hover:bg-teal-800 text-white transition-all flex items-center justify-center rounded-br-lg">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="px-6 py-3 sm:py-4 bg-teal-700 hover:bg-teal-800 text-white transition-all flex items-center justify-center rounded-b-lg md:rounded-bl-none md:rounded-br-lg gap-2">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
+                            <span class="md:hidden text-sm font-medium">Search</span>
                         </button>
                     </div>
                 </div>
@@ -351,6 +352,12 @@
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
                                     <span x-text="car.distance_km + ' km'"></span>
                                 </div>
+                                <!-- Favorite Button -->
+                                <button @click.prevent="toggleFavorite(car.id, $event.currentTarget)" class="absolute bottom-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors" title="Save to Favorites">
+                                    <svg class="w-5 h-5" :class="car.is_favorited ? 'text-red-500 fill-current' : 'text-slate-400'" :fill="car.is_favorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                    </svg>
+                                </button>
                             </div>
                             <div class="p-5">
                                 <div class="flex justify-between items-start mb-3"><div class="flex-1 min-w-0"><h3 class="font-semibold text-slate-900 truncate group-hover:text-amber-600 transition-colors"><a :href="car.url" x-text="car.title"></a></h3><p class="text-sm text-slate-500 truncate" x-text="car.year + ' • ' + (car.category || '')"></p></div><div class="text-right ml-4"><span class="text-lg font-bold text-amber-600" x-text="car.price"></span><p x-show="car.negotiable" class="text-xs text-slate-500">Negotiable</p></div></div>
@@ -391,6 +398,12 @@
                                 <img :src="car.image" :alt="car.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                                 <div x-show="car.is_featured" class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">Featured</div>
                                 <div class="absolute top-3 right-3 px-3 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-medium rounded-full" x-text="car.condition"></div>
+                                <!-- Favorite Button -->
+                                <button @click.prevent="toggleFavorite(car.id, $event.currentTarget)" class="absolute bottom-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors" title="Save to Favorites">
+                                    <svg class="w-5 h-5" :class="car.is_favorited ? 'text-red-500 fill-current' : 'text-slate-400'" :fill="car.is_favorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                    </svg>
+                                </button>
                             </div>
                             <div class="p-5">
                                 <div class="flex justify-between items-start mb-3"><div class="flex-1 min-w-0"><h3 class="font-semibold text-slate-900 truncate group-hover:text-amber-600 transition-colors"><a :href="car.url" x-text="car.title"></a></h3><p class="text-sm text-slate-500 truncate" x-text="car.year + ' • ' + (car.category || '')"></p></div><div class="text-right ml-4"><span class="text-lg font-bold text-amber-600" x-text="car.price"></span><p x-show="car.negotiable" class="text-xs text-slate-500">Negotiable</p></div></div>
@@ -432,6 +445,12 @@
                                 <div x-show="car.is_featured" class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">Featured</div>
                                 <div class="absolute top-3 right-3 px-3 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-medium rounded-full" x-text="car.condition"></div>
                                 <template x-if="car.distance_km"><div class="absolute bottom-3 left-3 px-2.5 py-1 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg><span x-text="car.distance_km + ' km'"></span></div></template>
+                                <!-- Favorite Button -->
+                                <button @click.prevent="toggleFavorite(car.id, $event.currentTarget)" class="absolute bottom-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors" title="Save to Favorites">
+                                    <svg class="w-5 h-5" :class="car.is_favorited ? 'text-red-500 fill-current' : 'text-slate-400'" :fill="car.is_favorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                    </svg>
+                                </button>
                             </div>
                             <div class="p-5">
                                 <div class="flex justify-between items-start mb-3"><div class="flex-1 min-w-0"><h3 class="font-semibold text-slate-900 truncate group-hover:text-amber-600 transition-colors"><a :href="car.url" x-text="car.title"></a></h3><p class="text-sm text-slate-500 truncate" x-text="car.year + ' • ' + (car.category || '')"></p></div><div class="text-right ml-4"><span class="text-lg font-bold text-amber-600" x-text="car.price"></span><p x-show="car.negotiable" class="text-xs text-slate-500">Negotiable</p></div></div>
@@ -683,7 +702,47 @@
                 searchQuery: '', suggestions: [], suggestionsOpen: false, searching: false,
                 selectedMake: '', selectedMakeId: null, selectedModel: '', models: [],
                 selectedYear: '', selectedCondition: '', selectedCarId: null,
+                geoDetecting: false,
                 conditionLabels: { @foreach($conditions ?? [] as $condition) '{{ $condition->value }}': '{{ $condition->label }}', @endforeach },
+
+                // Auto-detect user location on init
+                initGeoLocation() {
+                    if (!navigator.geolocation) return;
+                    this.geoDetecting = true;
+                    navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                            try {
+                                const lat = pos.coords.latitude;
+                                const lon = pos.coords.longitude;
+                                const r = await fetch(`/api/locations/reverse?lat=${lat}&lon=${lon}`);
+                                if (r.ok) {
+                                    const data = await r.json();
+                                    this.selectedCity = data.city || '';
+                                    this.selectedLat = data.lat || lat;
+                                    this.selectedLon = data.lon || lon;
+                                    // Dispatch event so the location-search component updates its display
+                                    window.dispatchEvent(new CustomEvent('set-location', {
+                                        detail: {
+                                            city: data.city || '',
+                                            state: data.state || '',
+                                            country: data.country || '',
+                                            lat: data.lat || lat,
+                                            lon: data.lon || lon,
+                                            display_name: data.display_name || data.city || ''
+                                        }
+                                    }));
+                                }
+                            } catch(e) {
+                                console.warn('Geo-detection failed:', e);
+                            } finally {
+                                this.geoDetecting = false;
+                            }
+                        },
+                        () => { this.geoDetecting = false; },
+                        { timeout: 8000, enableHighAccuracy: false }
+                    );
+                },
+
                 async fetchModels() {
                     this.models = []; this.selectedModel = '';
                     if (!this.selectedMakeId) return;

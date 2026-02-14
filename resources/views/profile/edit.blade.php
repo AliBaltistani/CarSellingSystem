@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Profile Header -->
             <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 mb-6 shadow-lg">
                 <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">

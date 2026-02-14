@@ -18,8 +18,10 @@ class FavoriteController extends Controller
         return view('favorites.index', compact('favorites'));
     }
 
-    public function toggle(Car $car)
+    public function toggle($carId)
     {
+        $car = Car::findOrFail($carId);
+
         $favorite = Favorite::where('user_id', auth()->id())
             ->where('car_id', $car->id)
             ->first();

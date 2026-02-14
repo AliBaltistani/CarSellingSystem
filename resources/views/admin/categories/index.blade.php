@@ -1,5 +1,5 @@
 <x-layouts.admin title="Categories">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Categories</h1>
             <p class="text-slate-600">Manage car categories</p>
@@ -10,7 +10,8 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[600px]">
             <thead class="bg-slate-50 border-b border-slate-100">
                 <tr>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Order</th>
@@ -65,5 +66,6 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </x-layouts.admin>

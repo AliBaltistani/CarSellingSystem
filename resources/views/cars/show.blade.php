@@ -1,4 +1,6 @@
 <x-layouts.public :seo="$seo ?? []">
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
@@ -236,19 +238,18 @@
                             <span x-text="linkCopied ? '✓ Link Copied!' : 'Share Listing'"></span>
                         </button>
 
-                        <!-- Favorite Button -->
-                        @auth
-                            <button onclick="toggleFavorite({{ $car->id }}, this)"
-                                class="w-full flex items-center justify-center px-6 py-3 border-2 border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-xl transition-all favorite-btn group"
-                                data-favorited="{{ $car->isFavoritedBy(auth()->user()) ? 'true' : 'false' }}">
-                                <svg class="w-5 h-5 mr-2 {{ $car->isFavoritedBy(auth()->user()) ? 'text-red-500 fill-current' : 'text-slate-400' }} group-hover:scale-110 transition-transform"
-                                    fill="{{ $car->isFavoritedBy(auth()->user()) ? 'currentColor' : 'none' }}"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                                <span>{{ $car->isFavoritedBy(auth()->user()) ? 'Saved to Favorites' : 'Save to Favorites' }}</span>
-                            </button>
-                        @endauth
+                        <!-- Favorite Button (visible to all users) -->
+                        @php $isFav = $car->isFavoritedBy(auth()->user()); @endphp
+                        <button onclick="toggleFavorite({{ $car->id }}, this)"
+                            class="w-full flex items-center justify-center px-6 py-3 border-2 border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-xl transition-all group"
+                            title="Save to Favorites">
+                            <svg class="w-5 h-5 mr-2 {{ $isFav ? 'text-red-500 fill-current' : 'text-slate-400' }} group-hover:scale-110 transition-transform"
+                                fill="{{ $isFav ? 'currentColor' : 'none' }}"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            <span>{{ $isFav ? 'Saved to Favorites' : 'Save to Favorites' }}</span>
+                        </button>
                     </div>
 
                     <!-- Location -->
@@ -258,7 +259,22 @@
                             <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             Location
                         </h3>
-                        <p class="text-slate-600">{{ $car->city }}@if($car->country), {{ $car->country }}@endif</p>
+                        <p class="text-slate-600 mb-3">{{ $car->city }}@if($car->country), {{ $car->country }}@endif</p>
+
+                        @if($car->latitude && $car->longitude)
+                        <!-- Leaflet Map -->
+                        <div id="car-location-map" class="w-full h-48 rounded-xl overflow-hidden border border-slate-200 shadow-inner mb-3" style="z-index: 0;"></div>
+
+                        <!-- Get Directions Link -->
+                        <a href="https://www.google.com/maps/dir/?api=1&destination={{ $car->latitude }},{{ $car->longitude }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold rounded-xl border border-blue-100 transition-all group">
+                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                            </svg>
+                            Get Directions
+                        </a>
+                        @endif
                     </div>
                     @endif
 
@@ -300,6 +316,8 @@
     </div>
 
     @push('scripts')
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
     function carShowPage() {
         return {
@@ -313,31 +331,45 @@
         };
     }
 
-    function toggleFavorite(carId, btn) {
-        fetch(`/favorites/${carId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            const svg = btn.querySelector('svg');
-            const span = btn.querySelector('span');
-            if (data.is_favorited) {
-                svg.classList.add('text-red-500', 'fill-current');
-                svg.classList.remove('text-slate-400');
-                svg.setAttribute('fill', 'currentColor');
-                span.textContent = 'Saved to Favorites';
-            } else {
-                svg.classList.remove('text-red-500', 'fill-current');
-                svg.classList.add('text-slate-400');
-                svg.setAttribute('fill', 'none');
-                span.textContent = 'Save to Favorites';
-            }
+    // toggleFavorite is defined globally in public.blade.php
+
+    // Initialize Leaflet map for car location
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapEl = document.getElementById('car-location-map');
+        if (!mapEl) return;
+
+        const lat = {{ $car->latitude ?? 'null' }};
+        const lng = {{ $car->longitude ?? 'null' }};
+        if (lat === null || lng === null) return;
+
+        const map = L.map('car-location-map', {
+            scrollWheelZoom: false,
+            zoomControl: true,
+            dragging: true,
+            attributionControl: false
+        }).setView([lat, lng], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Custom marker icon with blue color
+        const markerIcon = L.divIcon({
+            html: '<div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 28],
+            popupAnchor: [0, -28],
+            className: ''
         });
-    }
+
+        L.marker([lat, lng], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup('<strong>{{ addslashes($car->title) }}</strong><br>{{ addslashes($car->city) }}@if($car->country), {{ addslashes($car->country) }}@endif');
+
+        // Fix map rendering when container becomes visible
+        setTimeout(() => map.invalidateSize(), 300);
+    });
     </script>
     @endpush
 </x-layouts.public>

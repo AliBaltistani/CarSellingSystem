@@ -90,7 +90,7 @@ Route::middleware('auth')->group(function () {
 
     // Favorites
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
-    Route::post('/favorites/{car}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
+    Route::post('/favorites/{car_id}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
     
     // User Car Listings
     Route::get('/my-cars', [CarController::class, 'myListings'])->name('cars.my-listings');

@@ -524,6 +524,125 @@
     </a>
     @endif
 
+    <!-- Favorite Toast Notification -->
+    <div id="fav-toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none transition-all duration-300 opacity-0 translate-y-4" style="display:none;">
+        <div class="px-5 py-3 bg-slate-900 text-white text-sm font-medium rounded-xl shadow-2xl flex items-center gap-2">
+            <svg id="fav-toast-icon" class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span id="fav-toast-msg"></span>
+        </div>
+    </div>
+
+    <style>
+        @keyframes heartPulse { 0% { transform: scale(1); } 30% { transform: scale(1.35); } 60% { transform: scale(0.95); } 100% { transform: scale(1); } }
+        .heart-pulse { animation: heartPulse 0.4s ease-in-out; }
+    </style>
+
+    <script>
+        // Global auth flag
+        window.__isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
+        window.__loginUrl = '{{ route("login") }}';
+
+        // Global favorite toggle function
+        window.toggleFavorite = function(carId, btnEl) {
+            // Guest check
+            if (!window.__isAuthenticated) {
+                window.location.href = window.__loginUrl;
+                return;
+            }
+
+            const svg = btnEl.querySelector('svg');
+            if (!svg) return;
+
+            // Optimistic UI update
+            const wasFavorited = svg.getAttribute('fill') === 'currentColor';
+            const nowFavorited = !wasFavorited;
+
+            // Update heart immediately
+            if (nowFavorited) {
+                svg.classList.add('text-red-500', 'fill-current', 'heart-pulse');
+                svg.classList.remove('text-slate-400');
+                svg.setAttribute('fill', 'currentColor');
+            } else {
+                svg.classList.remove('text-red-500', 'fill-current');
+                svg.classList.add('text-slate-400');
+                svg.setAttribute('fill', 'none');
+            }
+            setTimeout(() => svg.classList.remove('heart-pulse'), 400);
+
+            // Update text if present (show page has a span)
+            const span = btnEl.querySelector('span');
+            if (span) {
+                span.textContent = nowFavorited ? 'Saved to Favorites' : 'Save to Favorites';
+            }
+
+            // Send request
+            fetch('/favorites/' + carId, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                }
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = window.__loginUrl;
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (!data) return;
+                // Correct if server state differs from optimistic
+                if (data.is_favorited !== nowFavorited) {
+                    if (data.is_favorited) {
+                        svg.classList.add('text-red-500', 'fill-current');
+                        svg.classList.remove('text-slate-400');
+                        svg.setAttribute('fill', 'currentColor');
+                    } else {
+                        svg.classList.remove('text-red-500', 'fill-current');
+                        svg.classList.add('text-slate-400');
+                        svg.setAttribute('fill', 'none');
+                    }
+                    if (span) span.textContent = data.is_favorited ? 'Saved to Favorites' : 'Save to Favorites';
+                }
+                // Show toast
+                showFavToast(data.message || (data.is_favorited ? 'Added to favorites!' : 'Removed from favorites.'));
+            })
+            .catch(() => {
+                // Revert on error
+                if (wasFavorited) {
+                    svg.classList.add('text-red-500', 'fill-current');
+                    svg.classList.remove('text-slate-400');
+                    svg.setAttribute('fill', 'currentColor');
+                } else {
+                    svg.classList.remove('text-red-500', 'fill-current');
+                    svg.classList.add('text-slate-400');
+                    svg.setAttribute('fill', 'none');
+                }
+                if (span) span.textContent = wasFavorited ? 'Saved to Favorites' : 'Save to Favorites';
+                showFavToast('Something went wrong. Please try again.');
+            });
+        };
+
+        function showFavToast(msg) {
+            const toast = document.getElementById('fav-toast');
+            const msgEl = document.getElementById('fav-toast-msg');
+            if (!toast || !msgEl) return;
+            msgEl.textContent = msg;
+            toast.style.display = 'block';
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-4');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            });
+            clearTimeout(window.__favToastTimer);
+            window.__favToastTimer = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 2500);
+        }
+    </script>
+
     @stack('scripts')
 </body>
 </html>

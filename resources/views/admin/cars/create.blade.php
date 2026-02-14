@@ -252,7 +252,7 @@
 
             <!-- Step 4: Contact & Location -->
             <div x-show="currentStep === 4" data-step="4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
-                <div class="bg-white rounded-xl shadow-sm p-6" x-data="locationSearch()">
+                <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number *</label>

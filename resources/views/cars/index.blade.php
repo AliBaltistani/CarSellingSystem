@@ -222,6 +222,12 @@
                                 <div x-show="car.is_featured" class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">Featured</div>
                                 <div class="absolute top-3 right-3 px-3 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-medium rounded-full" x-text="car.condition"></div>
                                 <template x-if="car.distance_km"><div class="absolute bottom-3 left-3 px-2.5 py-1 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg><span x-text="car.distance_km + ' km'"></span></div></template>
+                                <!-- Favorite Button -->
+                                <button @click.prevent="toggleFavorite(car.id, $event.currentTarget)" class="absolute bottom-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors" title="Save to Favorites">
+                                    <svg class="w-5 h-5" :class="car.is_favorited ? 'text-red-500 fill-current' : 'text-slate-400'" :fill="car.is_favorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                    </svg>
+                                </button>
                             </div>
                             <div class="p-5">
                                 <div class="flex justify-between items-start mb-3">

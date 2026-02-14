@@ -34,7 +34,10 @@
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-slate-100">
-    <div class="min-h-screen flex" x-data="{ sidebarOpen: true }">
+    <div class="min-h-screen flex" x-data="{ sidebarOpen: window.innerWidth >= 1024 }" @resize.window="sidebarOpen = window.innerWidth >= 1024">
+        <!-- Sidebar Overlay (mobile only) -->
+        <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden" x-transition.opacity style="display: none;"></div>
+
         <!-- Sidebar -->
         <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 transform transition-transform duration-200 flex flex-col"
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
@@ -185,9 +188,9 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 ml-64">
+        <div class="flex-1 transition-[margin] duration-200 lg:ml-64">
             <!-- Top Bar -->
-            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6">
                 <button @click="sidebarOpen = !sidebarOpen" class="text-slate-500 hover:text-slate-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -209,18 +212,18 @@
 
             <!-- Flash Messages -->
             @if(session('success'))
-                <div class="mx-6 mt-4 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg">
+                <div class="mx-4 sm:mx-6 mt-4 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg">
                     {{ session('success') }}
                 </div>
             @endif
             @if(session('error'))
-                <div class="mx-6 mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+                <div class="mx-4 sm:mx-6 mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-lg">
                     {{ session('error') }}
                 </div>
             @endif
 
             <!-- Page Content -->
-            <main class="p-6">
+            <main class="p-4 sm:p-6">
                 {{ $slot }}
             </main>
         </div>

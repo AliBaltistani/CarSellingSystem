@@ -18,20 +18,19 @@
             {{ ucfirst($car->condition) }}
         </div>
 
-        <!-- Favorite Button -->
-        @auth
-            <button 
-                onclick="toggleFavorite({{ $car->id }}, this)"
-                class="absolute bottom-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors favorite-btn"
-                data-favorited="{{ $car->isFavoritedBy(auth()->user()) ? 'true' : 'false' }}">
-                <svg class="w-5 h-5 {{ $car->isFavoritedBy(auth()->user()) ? 'text-red-500 fill-current' : 'text-slate-400' }}" 
-                    fill="{{ $car->isFavoritedBy(auth()->user()) ? 'currentColor' : 'none' }}" 
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                </svg>
-            </button>
-        @endauth
+        <!-- Favorite Button (visible to all users) -->
+        @php $isFav = $car->isFavoritedBy(auth()->user()); @endphp
+        <button 
+            onclick="toggleFavorite({{ $car->id }}, this)"
+            class="absolute bottom-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
+            title="Save to Favorites">
+            <svg class="w-5 h-5 {{ $isFav ? 'text-red-500 fill-current' : 'text-slate-400' }}" 
+                fill="{{ $isFav ? 'currentColor' : 'none' }}" 
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Content -->
@@ -113,31 +112,3 @@
     </div>
 </article>
 
-@once
-@push('scripts')
-<script>
-function toggleFavorite(carId, btn) {
-    fetch(`/favorites/${carId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json',
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        const svg = btn.querySelector('svg');
-        if (data.is_favorited) {
-            svg.classList.add('text-red-500', 'fill-current');
-            svg.classList.remove('text-slate-400');
-            svg.setAttribute('fill', 'currentColor');
-        } else {
-            svg.classList.remove('text-red-500', 'fill-current');
-            svg.classList.add('text-slate-400');
-            svg.setAttribute('fill', 'none');
-        }
-    });
-}
-</script>
-@endpush
-@endonce

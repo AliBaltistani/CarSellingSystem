@@ -1,7 +1,7 @@
 <x-layouts.admin>
     <x-slot name="title">Attribute Groups</x-slot>
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Attribute Groups</h1>
             <p class="text-slate-600 mt-1">Organize attributes into logical groups (Engine, Interior, Safety, etc.)</p>
@@ -28,7 +28,8 @@
     @endif
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[600px]">
             <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order</th>
@@ -99,6 +100,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 
     <div class="mt-6">

@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Welcome Banner -->
             <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 mb-8 shadow-lg">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">

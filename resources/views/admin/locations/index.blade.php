@@ -26,7 +26,8 @@
 
     <!-- Locations Table -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[600px]">
             <thead class="bg-slate-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">City</th>
@@ -88,6 +89,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 
     <!-- Pagination -->

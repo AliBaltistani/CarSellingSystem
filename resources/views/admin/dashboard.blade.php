@@ -1,11 +1,11 @@
 <x-layouts.admin title="Dashboard">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p class="text-slate-600">Welcome back, {{ auth()->user()->name }}</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Dashboard</h1>
+        <p class="text-sm sm:text-base text-slate-600">Welcome back, {{ auth()->user()->name }}</p>
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
         <div class="bg-white rounded-xl p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>

@@ -1,7 +1,7 @@
 <x-layouts.admin>
     <x-slot name="title">Dropdown Options</x-slot>
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Dropdown Options</h1>
             <p class="text-slate-600 mt-1">Manage all dropdown values used across the frontend</p>
@@ -52,7 +52,8 @@
 
     <!-- Options Table -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[600px]">
             <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Label</th>
@@ -144,6 +145,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
 
         @if($options->hasPages())
             <div class="px-4 py-3 border-t border-slate-200 bg-slate-50">
