@@ -63,7 +63,7 @@
             @method('PUT')
 
             <!-- Step 1: Basic Information -->
-            <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 1" data-step="1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
@@ -157,7 +157,7 @@
             </div>
 
             <!-- Step 2: Specifications -->
-            <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 2" data-step="2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
@@ -270,13 +270,11 @@
             </div>
 
             <!-- Step 3: Description -->
-            <div x-show="currentStep === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 3" data-step="3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Description * (min 50 characters)</label>
-                        <textarea name="description" rows="8" required minlength="50"
-                            placeholder="Describe your car in detail. Include history, features, condition, reason for selling, etc."
-                            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent @error('description') border-red-500 @enderror">{{ old('description', $car->description) }}</textarea>
+                        <x-forms.rich-editor name="description" :value="old('description', $car->description)" height="200px" :required="true" placeholder="Describe your car in detail. Include history, features, condition, reason for selling, etc." />
                         @error('description')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -286,7 +284,7 @@
             </div>
 
             <!-- Step 4: Contact Information -->
-            <div x-show="currentStep === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 4" data-step="4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="bg-white rounded-xl shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -325,7 +323,7 @@
             </div>
 
             <!-- Step 5: Photos -->
-            <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+            <div x-show="currentStep === 5" data-step="5" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 
                 <!-- Current Images -->
                 @if($car->images->count() > 0)
@@ -401,7 +399,7 @@
                         </svg>
                     </button>
 
-                    <button type="submit" x-show="currentStep === 5"
+                    <button type="button" x-show="currentStep === 5" @click="submitForm()"
                         class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/25">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -596,9 +594,15 @@
                     { number: 5, shortTitle: 'Photos', title: 'Upload Photos', heading: 'Add photos of your car', description: 'High-quality photos help sell your car faster' },
                 ],
 
+                submitForm() {
+                    if (this.validateStep(this.currentStep)) {
+                        document.getElementById('car-form').submit();
+                    }
+                },
+
                 validateStep(step) {
                     this.validationErrors = [];
-                    const stepEl = document.querySelector(`[x-show="currentStep === ${step}"]`);
+                    const stepEl = document.querySelector(`[data-step="${step}"]`);
                     if (!stepEl) return true;
 
                     const requiredFields = stepEl.querySelectorAll('[required]');

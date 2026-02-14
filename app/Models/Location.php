@@ -15,6 +15,10 @@ class Location extends Model
         'state',
         'country',
         'display_name',
+        'address',
+        'county',
+        'neighbourhood',
+        'postcode',
         'latitude',
         'longitude',
         'is_active',
@@ -35,7 +39,7 @@ class Location extends Model
             return $this->display_name;
         }
 
-        $parts = array_filter([$this->city, $this->state, $this->country]);
+        $parts = array_filter([$this->address, $this->city, $this->state, $this->country]);
         return implode(', ', $parts);
     }
 
@@ -56,7 +60,10 @@ class Location extends Model
             $q->where('city', 'like', "%{$search}%")
               ->orWhere('state', 'like', "%{$search}%")
               ->orWhere('country', 'like', "%{$search}%")
-              ->orWhere('display_name', 'like', "%{$search}%");
+              ->orWhere('display_name', 'like', "%{$search}%")
+              ->orWhere('address', 'like', "%{$search}%")
+              ->orWhere('county', 'like', "%{$search}%")
+              ->orWhere('neighbourhood', 'like', "%{$search}%");
         });
     }
 
@@ -73,6 +80,10 @@ class Location extends Model
             [
                 'state' => $data['state'] ?? null,
                 'display_name' => $data['display_name'] ?? null,
+                'address' => $data['address'] ?? null,
+                'county' => $data['county'] ?? null,
+                'neighbourhood' => $data['neighbourhood'] ?? null,
+                'postcode' => $data['postcode'] ?? null,
                 'latitude' => $data['lat'] ?? null,
                 'longitude' => $data['lon'] ?? null,
                 'is_active' => true,

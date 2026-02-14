@@ -322,14 +322,7 @@
                                 <span class="text-xs text-slate-500">Show in featured section</span>
                             </div>
                         </label>
-                        <label class="flex items-center space-x-3 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors">
-                            <input type="checkbox" name="is_sold" value="1" {{ old('is_sold', $car->is_sold) ? 'checked' : '' }}
-                                class="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
-                            <div>
-                                <span class="text-sm font-medium text-slate-700 block">Sold</span>
-                                <span class="text-xs text-slate-500">Mark as sold</span>
-                            </div>
-                        </label>
+
                         <label class="flex items-center space-x-3 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="negotiable" value="1" {{ old('negotiable', $car->negotiable) ? 'checked' : '' }}
                                 class="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500">

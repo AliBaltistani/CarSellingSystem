@@ -31,7 +31,7 @@ class CarController extends Controller
         $query->filter($request->only([
             'make', 'model', 'min_price', 'max_price',
             'min_year', 'max_year', 'condition', 'transmission',
-            'fuel_type', 'body_type', 'category', 'search'
+            'fuel_type', 'body_type', 'category', 'search', 'city'
         ]));
 
         // Apply dynamic attribute filters
@@ -63,11 +63,24 @@ class CarController extends Controller
         $bodyTypes = DropdownOption::byType(DropdownOption::TYPE_BODY_TYPE);
 
         // Get filterable dynamic attributes with options
-        $filterableAttributes = Attribute::active()
+        $attributesQuery = Attribute::active()
             ->filterable()
             ->with(['options', 'group'])
-            ->ordered()
-            ->get()
+            ->ordered();
+
+        // Filter attributes by category if selected
+        if ($request->has('category')) {
+            $categorySlug = $request->input('category');
+            $category = Category::where('slug', $categorySlug)->first();
+            if ($category) {
+                // If category found, filter attributes by this category
+                $attributesQuery->whereHas('categories', function($q) use ($category) {
+                    $q->where('categories.id', $category->id);
+                });
+            }
+        }
+
+        $filterableAttributes = $attributesQuery->get()
             ->groupBy(fn($attr) => $attr->group?->name ?? 'Other');
 
         $seo = $this->seoService->generateListingMeta($request->all());
@@ -137,6 +150,9 @@ class CarController extends Controller
         // Get filterable dynamic attributes with options
         $filterableAttributes = Attribute::active()
             ->filterable()
+            ->whereHas('categories', function($q) use ($category) {
+                $q->where('categories.id', $category->id);
+            })
             ->with(['options', 'group'])
             ->ordered()
             ->get()
@@ -358,13 +374,21 @@ class CarController extends Controller
             'mileage' => 'nullable|integer|min:0',
             'body_type' => 'nullable|string|max:50',
             'exterior_color' => 'nullable|string|max:50',
+            'interior_color' => 'nullable|string|max:50',
+            'doors' => 'nullable|integer|min:2|max:6',
+            'seats' => 'nullable|integer|min:1|max:12',
+            'negotiable' => 'sometimes|boolean',
+            'status' => 'nullable|in:available,sold,pending,reserved',
             'whatsapp_number' => 'required|string|max:20',
             'phone_number' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'images' => 'array|max:10',
             'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
     }
 }
-

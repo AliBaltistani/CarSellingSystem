@@ -228,7 +228,9 @@
                     <!-- Bottom Row: Location | Search Input | Button -->
                     <div class="flex flex-col md:flex-row border-t border-slate-200">
                         <!-- Location Input -->
-                        <div class="relative md:w-64 border-b md:border-b-0 md:border-r border-slate-200">
+                        <div class="relative md:w-64 border-b md:border-b-0 md:border-r border-slate-200"
+                             @location-selected.window="selectedCity = $event.detail.city; selectedLat = $event.detail.lat; selectedLon = $event.detail.lon"
+                             @location-cleared.window="selectedCity = ''; selectedLat = null; selectedLon = null">
                             <x-forms.location-search 
                                 name="location" 
                                 placeholder="Search location..." 
@@ -718,6 +720,10 @@
                     if (this.selectedLat && this.selectedLon) {
                         params.append('latitude', this.selectedLat);
                         params.append('longitude', this.selectedLon);
+                    }
+                    
+                    if (this.selectedCity) {
+                        params.append('city', this.selectedCity);
                     }
                     
                     if (this.selectedMake) {

@@ -64,6 +64,11 @@ class CarController extends Controller
     public function store(Request $request)
     {
         try {
+            // Use dynamic DB values to stay in sync with admin-managed dropdown options
+            $validConditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION)->pluck('value')->toArray();
+            $validTransmissions = DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION)->pluck('value')->toArray();
+            $validFuelTypes = DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE)->pluck('value')->toArray();
+
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|min:50',
@@ -72,19 +77,21 @@ class CarController extends Controller
                 'make' => 'required|string|max:100',
                 'model' => 'required|string|max:100',
                 'category_id' => 'required|exists:categories,id',
-                'condition' => 'required|in:new,used,certified',
-                'transmission' => 'required|in:automatic,manual,cvt,semi-automatic',
-                'fuel_type' => 'required|in:petrol,diesel,electric,hybrid,cng,lpg',
+                'condition' => 'required|in:' . implode(',', $validConditions),
+                'transmission' => 'required|in:' . implode(',', $validTransmissions),
+                'fuel_type' => 'required|in:' . implode(',', $validFuelTypes),
                 'mileage' => 'nullable|integer|min:0',
                 'body_type' => 'nullable|string|max:50',
                 'exterior_color' => 'nullable|string|max:50',
                 'interior_color' => 'nullable|string|max:50',
-                'doors' => 'nullable|integer|min:2|max:5',
+                'doors' => 'nullable|integer|min:2|max:6',
                 'seats' => 'nullable|integer|min:1|max:12',
                 'whatsapp_number' => 'required|string|max:20',
                 'phone_number' => 'nullable|string|max:20',
                 'city' => 'nullable|string|max:100',
+                'state' => 'nullable|string|max:100',
                 'country' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
                 'latitude' => 'nullable|numeric|between:-90,90',
                 'longitude' => 'nullable|numeric|between:-180,180',
                 'status' => 'required|in:available,sold,pending,reserved',
@@ -189,6 +196,11 @@ class CarController extends Controller
 
     public function update(Request $request, Car $car)
     {
+        // Use dynamic DB values to stay in sync with admin-managed dropdown options
+        $validConditions = DropdownOption::byType(DropdownOption::TYPE_CONDITION)->pluck('value')->toArray();
+        $validTransmissions = DropdownOption::byType(DropdownOption::TYPE_TRANSMISSION)->pluck('value')->toArray();
+        $validFuelTypes = DropdownOption::byType(DropdownOption::TYPE_FUEL_TYPE)->pluck('value')->toArray();
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:50',
@@ -197,29 +209,33 @@ class CarController extends Controller
             'make' => 'required|string|max:100',
             'model' => 'required|string|max:100',
             'category_id' => 'required|exists:categories,id',
-            'condition' => 'required|in:new,used,certified',
-            'transmission' => 'required|in:automatic,manual,cvt,semi-automatic',
-            'fuel_type' => 'required|in:petrol,diesel,electric,hybrid,cng,lpg',
+            'condition' => 'required|in:' . implode(',', $validConditions),
+            'transmission' => 'required|in:' . implode(',', $validTransmissions),
+            'fuel_type' => 'required|in:' . implode(',', $validFuelTypes),
             'mileage' => 'nullable|integer|min:0',
             'body_type' => 'nullable|string|max:50',
             'exterior_color' => 'nullable|string|max:50',
             'interior_color' => 'nullable|string|max:50',
-            'doors' => 'nullable|integer|min:2|max:5',
+            'doors' => 'nullable|integer|min:2|max:6',
             'seats' => 'nullable|integer|min:1|max:12',
             'whatsapp_number' => 'required|string|max:20',
             'phone_number' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'status' => 'required|in:available,sold,pending,reserved',
             'is_featured' => 'boolean',
             'is_published' => 'boolean',
+            'negotiable' => 'boolean',
             'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $validated['is_featured'] = $request->boolean('is_featured');
         $validated['is_published'] = $request->boolean('is_published');
+        $validated['negotiable'] = $request->boolean('negotiable');
 
         // Handle sold status
         if ($validated['status'] === 'sold' && $car->status !== 'sold') {

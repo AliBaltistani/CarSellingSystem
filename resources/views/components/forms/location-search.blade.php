@@ -41,6 +41,15 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
         </div>
+
+        <!-- Clear Button -->
+        <button type="button" x-show="searchQuery.length > 0 && !searching" 
+                @click="clearLocation()"
+                class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Hidden Inputs (Only if name is provided) -->
@@ -49,6 +58,7 @@
     <input type="hidden" name="address" x-model="selectedDisplayName">
     <input type="hidden" name="state" x-model="selectedState">
     <input type="hidden" name="country" x-model="selectedCountry">
+    <input type="hidden" name="county" x-model="selectedCounty">
     <input type="hidden" name="latitude" x-model="selectedLat">
     <input type="hidden" name="longitude" x-model="selectedLon">
     <input type="hidden" name="display_name" x-model="selectedDisplayName">
@@ -58,20 +68,38 @@
     <div x-show="showResults && (results.length > 0 || searching)" 
          x-transition 
          @click.away="showResults = false"
-         class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+         class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-72 overflow-y-auto">
         
         <template x-for="(result, index) in results" :key="result.source === 'db' ? 'db-'+result.id : (result.place_id ? 'api-'+result.place_id : 'idx-'+index)">
             <button type="button" @click="selectLocation(result)"
-                class="w-full px-4 py-3 text-left hover:bg-amber-50 border-b border-slate-100 last:border-0">
+                class="w-full px-4 py-3 text-left hover:bg-amber-50 border-b border-slate-100 last:border-0 transition-colors">
                 <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <div>
-                        <div class="font-medium text-slate-900" x-text="result.display_name.split(',')[0]"></div>
-                        <div class="text-xs text-slate-500 mt-0.5" x-text="result.display_name"></div>
+                    <!-- Location icon with source badge -->
+                    <div class="flex-shrink-0 mt-0.5">
+                        <div class="relative">
+                            <svg class="w-5 h-5" :class="result.source === 'db' ? 'text-amber-500' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
                     </div>
+                    <div class="flex-1 min-w-0">
+                        <!-- Primary name (city or first part of display_name) -->
+                        <div class="font-medium text-slate-900 truncate" x-text="result.city || result.name || result.display_name.split(',')[0]"></div>
+                        <!-- Structured location info -->
+                        <div class="text-xs text-slate-500 mt-0.5 truncate">
+                            <span x-show="result.state" x-text="result.state"></span>
+                            <span x-show="result.state && result.country">, </span>
+                            <span x-show="result.country" x-text="result.country"></span>
+                            <span x-show="result.county" class="text-slate-400" x-text="' · ' + result.county"></span>
+                        </div>
+                        <!-- Full address for street-level results -->
+                        <div x-show="result.road || result.neighbourhood" class="text-xs text-slate-400 mt-0.5 truncate" 
+                             x-text="[result.road, result.neighbourhood].filter(Boolean).join(', ')"></div>
+                    </div>
+                    <!-- Source badge -->
+                    <span x-show="result.source === 'db'" 
+                          class="flex-shrink-0 text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full mt-0.5">Saved</span>
                 </div>
             </button>
         </template>
@@ -99,6 +127,7 @@
             selectedCity: config.value || '',
             selectedState: '',
             selectedCountry: '',
+            selectedCounty: '',
             selectedLat: config.latitude || null,
             selectedLon: config.longitude || null,
             selectedDisplayName: '',
@@ -126,6 +155,7 @@
                 this.selectedCity = result.city || result.name;
                 this.selectedState = result.state || '';
                 this.selectedCountry = result.country || '';
+                this.selectedCounty = result.county || '';
                 this.selectedLat = result.lat;
                 this.selectedLon = result.lon;
                 this.selectedDisplayName = result.display_name;
@@ -136,13 +166,40 @@
                 this.showResults = false;
                 this.results = [];
 
-                // Dispatch event first
-                this.$dispatch('location-selected', result);
+                // Dispatch event with full location data
+                this.$dispatch('location-selected', {
+                    city: this.selectedCity,
+                    state: this.selectedState,
+                    country: this.selectedCountry,
+                    county: this.selectedCounty,
+                    lat: this.selectedLat,
+                    lon: this.selectedLon,
+                    display_name: this.selectedDisplayName,
+                    source: result.source,
+                    road: result.road || null,
+                    neighbourhood: result.neighbourhood || null,
+                    postcode: result.postcode || null,
+                });
 
                 // Auto-save new locations from API if enabled
                 if (config.autoSave && result.source === 'api') {
                      this.saveLocationToDb(result);
                 }
+            },
+
+            clearLocation() {
+                this.searchQuery = '';
+                this.selectedCity = '';
+                this.selectedState = '';
+                this.selectedCountry = '';
+                this.selectedCounty = '';
+                this.selectedLat = null;
+                this.selectedLon = null;
+                this.selectedDisplayName = '';
+                this.results = [];
+                this.showResults = false;
+                
+                this.$dispatch('location-cleared');
             },
 
             async saveLocationToDb(result) {
@@ -162,6 +219,10 @@
                             state: result.state,
                             country: result.country,
                             display_name: result.name || result.city,
+                            address: result.display_name || null,
+                            county: result.county || null,
+                            neighbourhood: result.neighbourhood || null,
+                            postcode: result.postcode || null,
                             lat: result.lat,
                             lon: result.lon
                         })

@@ -260,6 +260,14 @@ class Car extends Model
                        ->orWhere('make', 'like', "%{$search}%")
                        ->orWhere('model', 'like', "%{$search}%");
                 })
+            )
+            ->when($filters['city'] ?? null, fn($q, $city) => 
+                $q->where(function ($sq) use ($city) {
+                    $sq->where('city', 'like', "%{$city}%")
+                       ->orWhere('state', 'like', "%{$city}%")
+                       ->orWhere('country', 'like', "%{$city}%")
+                       ->orWhere('address', 'like', "%{$city}%");
+                })
             );
     }
 
