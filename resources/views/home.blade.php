@@ -321,57 +321,135 @@
 
 
 
-    <!-- Featured Cars Section -->
-    @if($featuredCars->count() > 0)
-    <section class="py-20 bg-slate-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center mb-12">
-                <div>
-                    <h2 class="text-3xl font-bold text-slate-900">Featured Cars</h2>
-                    <p class="mt-2 text-slate-600">Hand-picked premium vehicles</p>
-                </div>
-                <a href="{{ route('cars.index') }}" class="text-amber-600 hover:text-amber-700 font-semibold flex items-center">
-                    View All
-                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @foreach($featuredCars as $car)
-                    <x-car-card :car="$car" />
-                @endforeach
-            </div>
-        </div>
-    </section>
-    @endif
+    <!-- SPA Car Sections -->
+    <div x-data="homeCars()" x-init="init()" x-cloak>
 
-    <!-- Latest Cars Section -->
-    @if($latestCars->count() > 0)
-    <section class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center mb-12">
-                <div>
-                    <h2 class="text-3xl font-bold text-slate-900">Latest Arrivals</h2>
-                    <p class="mt-2 text-slate-600">Fresh listings added recently</p>
+        <!-- Near You Section (shown when geolocation active) -->
+        <section x-show="userLat && nearYouCars.length > 0" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="py-16 bg-gradient-to-b from-blue-50 to-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center mb-10">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span x-text="locationLabel"></span>
+                            </span>
+                        </div>
+                        <h2 class="text-3xl font-bold text-slate-900">Cars Near You</h2>
+                        <p class="mt-2 text-slate-600">Closest vehicles to your location</p>
+                    </div>
+                    <a href="#" @click.prevent="viewAllNearby()" class="text-blue-600 hover:text-blue-700 font-semibold flex items-center">View All<svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
                 </div>
-                <a href="{{ route('cars.index') }}" class="text-amber-600 hover:text-amber-700 font-semibold flex items-center">
-                    View All
-                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <template x-for="(car, idx) in nearYouCars" :key="'near-'+idx+'-'+car.id">
+                        <article class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 animate-fade-in-up">
+                            <div class="relative aspect-[4/3] overflow-hidden">
+                                <img :src="car.image" :alt="car.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                                <div x-show="car.is_featured" class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">Featured</div>
+                                <div class="absolute top-3 right-3 px-3 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-medium rounded-full" x-text="car.condition"></div>
+                                <div x-show="car.distance_km" class="absolute bottom-3 left-3 px-2.5 py-1 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                                    <span x-text="car.distance_km + ' km'"></span>
+                                </div>
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-3"><div class="flex-1 min-w-0"><h3 class="font-semibold text-slate-900 truncate group-hover:text-amber-600 transition-colors"><a :href="car.url" x-text="car.title"></a></h3><p class="text-sm text-slate-500 truncate" x-text="car.year + ' • ' + (car.category || '')"></p></div><div class="text-right ml-4"><span class="text-lg font-bold text-amber-600" x-text="car.price"></span><p x-show="car.negotiable" class="text-xs text-slate-500">Negotiable</p></div></div>
+                                <div class="grid grid-cols-3 gap-3 py-3 border-y border-slate-100"><div class="text-center"><div class="text-sm font-medium text-slate-900" x-text="car.mileage || '-'"></div><div class="text-xs text-slate-500">KM</div></div><div class="text-center border-x border-slate-100"><div class="text-sm font-medium text-slate-900 capitalize" x-text="car.transmission || '-'"></div><div class="text-xs text-slate-500">Trans</div></div><div class="text-center"><div class="text-sm font-medium text-slate-900 capitalize" x-text="car.fuel_type || '-'"></div><div class="text-xs text-slate-500">Fuel</div></div></div>
+                                <div class="flex justify-between items-center mt-4"><div class="flex items-center text-sm text-slate-500"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span x-text="car.city"></span></div><a :href="car.whatsapp_link" target="_blank" class="flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"><svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>WhatsApp</a></div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+                <div class="text-center mt-8" x-show="nearYouHasMore">
+                    <button @click="loadMoreNearYou()" :disabled="nearYouLoading" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-500/25">
+                        <span x-show="!nearYouLoading">Load More Nearby</span>
+                        <span x-show="nearYouLoading" class="flex items-center gap-2"><svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</span>
+                    </button>
+                </div>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                @foreach($latestCars as $car)
-                    <x-car-card :car="$car" />
-                @endforeach
+        </section>
+
+        <!-- Featured Cars Section -->
+        <section class="py-20 bg-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center mb-12">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-900">Featured Cars</h2>
+                        <p class="mt-2 text-slate-600">Hand-picked premium vehicles</p>
+                    </div>
+                    <a href="{{ route('cars.index') }}" class="text-amber-600 hover:text-amber-700 font-semibold flex items-center">View All<svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+                </div>
+                <!-- Skeleton Loader -->
+                <div x-show="featuredLoading && featuredCars.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <template x-for="i in 6" :key="'skel-f-'+i"><div class="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse"><div class="aspect-[4/3] bg-slate-200"></div><div class="p-5 space-y-3"><div class="h-5 bg-slate-200 rounded w-3/4"></div><div class="h-4 bg-slate-200 rounded w-1/2"></div><div class="grid grid-cols-3 gap-3 py-3"><div class="h-8 bg-slate-200 rounded"></div><div class="h-8 bg-slate-200 rounded"></div><div class="h-8 bg-slate-200 rounded"></div></div></div></div></template>
+                </div>
+                <!-- Car Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <template x-for="(car, idx) in featuredCars" :key="'feat-'+idx+'-'+car.id">
+                        <article class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100" :style="'animation-delay:' + (idx * 80) + 'ms'" x-intersect.once="$el.classList.add('animate-fade-in-up')">
+                            <div class="relative aspect-[4/3] overflow-hidden">
+                                <img :src="car.image" :alt="car.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                                <div x-show="car.is_featured" class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">Featured</div>
+                                <div class="absolute top-3 right-3 px-3 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-medium rounded-full" x-text="car.condition"></div>
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-3"><div class="flex-1 min-w-0"><h3 class="font-semibold text-slate-900 truncate group-hover:text-amber-600 transition-colors"><a :href="car.url" x-text="car.title"></a></h3><p class="text-sm text-slate-500 truncate" x-text="car.year + ' • ' + (car.category || '')"></p></div><div class="text-right ml-4"><span class="text-lg font-bold text-amber-600" x-text="car.price"></span><p x-show="car.negotiable" class="text-xs text-slate-500">Negotiable</p></div></div>
+                                <div class="grid grid-cols-3 gap-3 py-3 border-y border-slate-100"><div class="text-center"><div class="text-sm font-medium text-slate-900" x-text="car.mileage || '-'"></div><div class="text-xs text-slate-500">KM</div></div><div class="text-center border-x border-slate-100"><div class="text-sm font-medium text-slate-900 capitalize" x-text="car.transmission || '-'"></div><div class="text-xs text-slate-500">Trans</div></div><div class="text-center"><div class="text-sm font-medium text-slate-900 capitalize" x-text="car.fuel_type || '-'"></div><div class="text-xs text-slate-500">Fuel</div></div></div>
+                                <div class="flex justify-between items-center mt-4"><div class="flex items-center text-sm text-slate-500"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span x-text="car.city"></span></div><a :href="car.whatsapp_link" target="_blank" class="flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"><svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>WhatsApp</a></div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+                <div class="text-center mt-10" x-show="featuredHasMore">
+                    <button @click="loadMoreFeatured()" :disabled="featuredLoading" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg shadow-orange-500/25">
+                        <span x-show="!featuredLoading">Load More Featured</span>
+                        <span x-show="featuredLoading" class="flex items-center gap-2"><svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    </section>
-    @endif
+        </section>
+
+        <!-- Latest Cars Section -->
+        <section class="py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center mb-12">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-900">Latest Arrivals</h2>
+                        <p class="mt-2 text-slate-600">Fresh listings added recently</p>
+                    </div>
+                    <a href="{{ route('cars.index') }}" class="text-amber-600 hover:text-amber-700 font-semibold flex items-center">View All<svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+                </div>
+                <!-- Skeleton Loader -->
+                <div x-show="latestLoading && latestCars.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <template x-for="i in 8" :key="'skel-l-'+i"><div class="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse"><div class="aspect-[4/3] bg-slate-200"></div><div class="p-5 space-y-3"><div class="h-5 bg-slate-200 rounded w-3/4"></div><div class="h-4 bg-slate-200 rounded w-1/2"></div><div class="grid grid-cols-3 gap-3 py-3"><div class="h-8 bg-slate-200 rounded"></div><div class="h-8 bg-slate-200 rounded"></div><div class="h-8 bg-slate-200 rounded"></div></div></div></div></template>
+                </div>
+                <!-- Car Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <template x-for="(car, idx) in latestCars" :key="'latest-'+idx+'-'+car.id">
+                        <article class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100" :style="'animation-delay:' + (idx * 60) + 'ms'" x-intersect.once="$el.classList.add('animate-fade-in-up')">
+                            <div class="relative aspect-[4/3] overflow-hidden">
+                                <img :src="car.image" :alt="car.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                                <div x-show="car.is_featured" class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">Featured</div>
+                                <div class="absolute top-3 right-3 px-3 py-1 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-medium rounded-full" x-text="car.condition"></div>
+                                <template x-if="car.distance_km"><div class="absolute bottom-3 left-3 px-2.5 py-1 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg><span x-text="car.distance_km + ' km'"></span></div></template>
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-3"><div class="flex-1 min-w-0"><h3 class="font-semibold text-slate-900 truncate group-hover:text-amber-600 transition-colors"><a :href="car.url" x-text="car.title"></a></h3><p class="text-sm text-slate-500 truncate" x-text="car.year + ' • ' + (car.category || '')"></p></div><div class="text-right ml-4"><span class="text-lg font-bold text-amber-600" x-text="car.price"></span><p x-show="car.negotiable" class="text-xs text-slate-500">Negotiable</p></div></div>
+                                <div class="grid grid-cols-3 gap-3 py-3 border-y border-slate-100"><div class="text-center"><div class="text-sm font-medium text-slate-900" x-text="car.mileage || '-'"></div><div class="text-xs text-slate-500">KM</div></div><div class="text-center border-x border-slate-100"><div class="text-sm font-medium text-slate-900 capitalize" x-text="car.transmission || '-'"></div><div class="text-xs text-slate-500">Trans</div></div><div class="text-center"><div class="text-sm font-medium text-slate-900 capitalize" x-text="car.fuel_type || '-'"></div><div class="text-xs text-slate-500">Fuel</div></div></div>
+                                <div class="flex justify-between items-center mt-4"><div class="flex items-center text-sm text-slate-500"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span x-text="car.city"></span></div><a :href="car.whatsapp_link" target="_blank" class="flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"><svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>WhatsApp</a></div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+                <div class="text-center mt-10" x-show="latestHasMore">
+                    <button @click="loadMoreLatest()" :disabled="latestLoading" class="px-8 py-3 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg">
+                        <span x-show="!latestLoading">Load More Cars</span>
+                        <span x-show="latestLoading" class="flex items-center gap-2"><svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
 
     <!-- CTA Section -->
     <section class="py-20 bg-gradient-to-r from-slate-900 to-slate-800">
@@ -573,6 +651,14 @@
     </section>
     @endif
 
+    @push('styles')
+    <style>
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        [x-cloak] { display: none !important; }
+    </style>
+    @endpush
+
     @push('scripts')
     <script>
         // Hero Slider Component
@@ -581,168 +667,138 @@
                 currentSlide: 0,
                 totalSlides: {{ $banners->count() ?: 1 }},
                 autoplayInterval: null,
-                
-                init() {
-                    if (this.totalSlides > 1) {
-                        this.startAutoplay();
-                    }
-                },
-                
-                startAutoplay() {
-                    this.autoplayInterval = setInterval(() => {
-                        this.nextSlide();
-                    }, 5000);
-                },
-                
-                stopAutoplay() {
-                    if (this.autoplayInterval) {
-                        clearInterval(this.autoplayInterval);
-                    }
-                },
-                
-                nextSlide() {
-                    this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
-                },
-                
-                prevSlide() {
-                    this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
-                },
-                
-                goToSlide(index) {
-                    this.currentSlide = index;
-                    this.stopAutoplay();
-                    this.startAutoplay();
-                }
+                init() { if (this.totalSlides > 1) this.startAutoplay(); },
+                startAutoplay() { this.autoplayInterval = setInterval(() => this.nextSlide(), 5000); },
+                stopAutoplay() { if (this.autoplayInterval) clearInterval(this.autoplayInterval); },
+                nextSlide() { this.currentSlide = (this.currentSlide + 1) % this.totalSlides; },
+                prevSlide() { this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides; },
+                goToSlide(index) { this.currentSlide = index; this.stopAutoplay(); this.startAutoplay(); }
             };
         }
 
         // Car Search Form Component
         function carSearchForm() {
             return {
-                // Location state
-                // Location state
-                selectedCity: '', // Kept for searchCars usage
-                selectedLat: null,
-                selectedLon: null,
-                
-                // Search state
-                searchQuery: '',
-                suggestions: [],
-                suggestionsOpen: false,
-                searching: false,
-                selectedMake: '',
-                selectedMakeId: null, // Added for API call
-                selectedModel: '', // Added for Model selection
-                models: [], // Added for Model list
-                selectedYear: '',
-                selectedCondition: '',
-                selectedCarId: null,
-                
-                // Condition labels mapping for display
-                conditionLabels: {
-                    @foreach($conditions ?? [] as $condition)
-                    '{{ $condition->value }}': '{{ $condition->label }}',
-                    @endforeach
-                },
-                
+                selectedCity: '', selectedLat: null, selectedLon: null,
+                searchQuery: '', suggestions: [], suggestionsOpen: false, searching: false,
+                selectedMake: '', selectedMakeId: null, selectedModel: '', models: [],
+                selectedYear: '', selectedCondition: '', selectedCarId: null,
+                conditionLabels: { @foreach($conditions ?? [] as $condition) '{{ $condition->value }}': '{{ $condition->label }}', @endforeach },
                 async fetchModels() {
-                    this.models = [];
-                    this.selectedModel = ''; // Reset model when make changes
-                    
-                    if (!this.selectedMakeId) {
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch(`/api/attributes/models?make_id=${this.selectedMakeId}`);
-                        if (response.ok) {
-                            this.models = await response.json();
-                        }
-                    } catch (error) {
-                        console.error('Failed to fetch models:', error);
-                    }
+                    this.models = []; this.selectedModel = '';
+                    if (!this.selectedMakeId) return;
+                    try { const r = await fetch(`/api/attributes/models?make_id=${this.selectedMakeId}`); if (r.ok) this.models = await r.json(); } catch(e) { console.error(e); }
                 },
-
                 async searchCars() {
-                    this.searching = true;
-                    this.suggestionsOpen = true;
-                    
+                    this.searching = true; this.suggestionsOpen = true;
                     try {
-                        // Build query params with all filters
-                        const params = new URLSearchParams();
-                        
-                        if (this.searchQuery && this.searchQuery.length >= 2) {
-                            params.append('q', this.searchQuery);
-                        }
-                        if (this.selectedMake) {
-                            params.append('make', this.selectedMake);
-                        }
-                        if (this.selectedModel) {
-                            params.append('model', this.selectedModel);
-                        }
-                        if (this.selectedYear) {
-                            params.append('year', this.selectedYear);
-                        }
-                        if (this.selectedCondition) {
-                            params.append('condition', this.selectedCondition);
-                        }
-                        if (this.selectedCity || this.locationQuery) {
-                            // Send just the city name if available, otherwise send the full query
-                            params.append('city', this.selectedCity || this.locationQuery.split(',')[0].trim());
-                        }
-                        
-                        const response = await fetch(`/api/cars/suggestions?${params.toString()}`);
-                        this.suggestions = await response.json();
-                    } catch (error) {
-                        console.error('Car search error:', error);
-                        this.suggestions = [];
-                    }
-                    
+                        const p = new URLSearchParams();
+                        if (this.searchQuery && this.searchQuery.length >= 2) p.append('q', this.searchQuery);
+                        if (this.selectedMake) p.append('make', this.selectedMake);
+                        if (this.selectedModel) p.append('model', this.selectedModel);
+                        if (this.selectedYear) p.append('year', this.selectedYear);
+                        if (this.selectedCondition) p.append('condition', this.selectedCondition);
+                        if (this.selectedCity) p.append('city', this.selectedCity);
+                        const r = await fetch(`/api/cars/suggestions?${p.toString()}`); this.suggestions = await r.json();
+                    } catch(e) { this.suggestions = []; }
                     this.searching = false;
                 },
-                
-                selectSuggestion(car) {
-                    this.searchQuery = car.title;
-                    this.selectedCarId = car.id;
-                    this.suggestionsOpen = false;
-                    this.suggestions = [];
-                },
-                
-
-                
+                selectSuggestion(car) { this.searchQuery = car.title; this.selectedCarId = car.id; this.suggestionsOpen = false; this.suggestions = []; },
                 submitSearch() {
-                    const params = new URLSearchParams();
-                    
-                    if (this.searchQuery) {
-                        params.append('search', this.searchQuery);
+                    const p = new URLSearchParams();
+                    if (this.searchQuery) p.append('search', this.searchQuery);
+                    if (this.selectedLat && this.selectedLon) { p.append('latitude', this.selectedLat); p.append('longitude', this.selectedLon); }
+                    if (this.selectedCity) p.append('city', this.selectedCity);
+                    if (this.selectedMake) p.append('make', this.selectedMake);
+                    if (this.selectedModel) p.append('model', this.selectedModel);
+                    if (this.selectedYear) p.append('year', this.selectedYear);
+                    if (this.selectedCondition) p.append('condition', this.selectedCondition);
+                    window.location.href = '/cars?' + p.toString();
+                }
+            };
+        }
+
+        // Home Cars SPA Component
+        function homeCars() {
+            return {
+                userLat: null, userLon: null, locationLabel: 'Near You',
+                // Near You
+                nearYouCars: [], nearYouPage: 1, nearYouHasMore: false, nearYouLoading: false,
+                // Featured
+                featuredCars: [], featuredPage: 1, featuredHasMore: false, featuredLoading: false,
+                // Latest
+                latestCars: [], latestPage: 1, latestHasMore: false, latestLoading: false,
+
+                async init() {
+                    // Load featured & latest immediately
+                    this.loadFeatured();
+                    this.loadLatest();
+                    // Try geolocation
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                                this.userLat = pos.coords.latitude;
+                                this.userLon = pos.coords.longitude;
+                                // Try reverse geocode for label
+                                try {
+                                    const r = await fetch(`/api/locations/reverse?lat=${this.userLat}&lon=${this.userLon}`);
+                                    const d = await r.json();
+                                    if (d.city) this.locationLabel = 'Near ' + d.city;
+                                } catch(e) {}
+                                // Load near you cars
+                                this.loadNearYou();
+                                // Reload latest with location sorting
+                                this.latestCars = []; this.latestPage = 1;
+                                this.loadLatest();
+                            },
+                            () => { /* denied, use default order */ },
+                            { timeout: 5000, enableHighAccuracy: false }
+                        );
                     }
-                    
-                    if (this.selectedLat && this.selectedLon) {
-                        params.append('latitude', this.selectedLat);
-                        params.append('longitude', this.selectedLon);
-                    }
-                    
-                    if (this.selectedCity) {
-                        params.append('city', this.selectedCity);
-                    }
-                    
-                    if (this.selectedMake) {
-                        params.append('make', this.selectedMake);
-                    }
-                    
-                    if (this.selectedModel) {
-                        params.append('model', this.selectedModel);
-                    }
-                    
-                    if (this.selectedYear) {
-                        params.append('year', this.selectedYear);
-                    }
-                    
-                    if (this.selectedCondition) {
-                        params.append('condition', this.selectedCondition);
-                    }
-                    
-                    window.location.href = '/cars?' + params.toString();
+                },
+
+                async fetchCars(params = {}) {
+                    const p = new URLSearchParams(params);
+                    if (this.userLat && this.userLon) { p.set('latitude', this.userLat); p.set('longitude', this.userLon); }
+                    const r = await fetch(`/api/cars/listing?${p.toString()}`);
+                    return await r.json();
+                },
+
+                async loadNearYou() {
+                    this.nearYouLoading = true;
+                    const data = await this.fetchCars({ page: this.nearYouPage, per_page: 8 });
+                    const existingIds = new Set(this.nearYouCars.map(c => c.id));
+                    this.nearYouCars = [...this.nearYouCars, ...data.data.filter(c => !existingIds.has(c.id))];
+                    this.nearYouHasMore = data.meta.has_more;
+                    this.nearYouLoading = false;
+                },
+                async loadMoreNearYou() { this.nearYouPage++; await this.loadNearYou(); },
+
+                async loadFeatured() {
+                    this.featuredLoading = true;
+                    const data = await this.fetchCars({ section: 'featured', page: this.featuredPage, per_page: 6 });
+                    const existingFeatIds = new Set(this.featuredCars.map(c => c.id));
+                    this.featuredCars = [...this.featuredCars, ...data.data.filter(c => !existingFeatIds.has(c.id))];
+                    this.featuredHasMore = data.meta.has_more;
+                    this.featuredLoading = false;
+                },
+                async loadMoreFeatured() { this.featuredPage++; await this.loadFeatured(); },
+
+                async loadLatest() {
+                    this.latestLoading = true;
+                    const data = await this.fetchCars({ section: 'latest', page: this.latestPage, per_page: 8 });
+                    const existingLatIds = new Set(this.latestCars.map(c => c.id));
+                    this.latestCars = [...this.latestCars, ...data.data.filter(c => !existingLatIds.has(c.id))];
+                    this.latestHasMore = data.meta.has_more;
+                    this.latestLoading = false;
+                },
+                async loadMoreLatest() { this.latestPage++; await this.loadLatest(); },
+
+                viewAllNearby() {
+                    const p = new URLSearchParams();
+                    if (this.userLat) p.append('latitude', this.userLat);
+                    if (this.userLon) p.append('longitude', this.userLon);
+                    window.location.href = '/cars?' + p.toString();
                 }
             };
         }

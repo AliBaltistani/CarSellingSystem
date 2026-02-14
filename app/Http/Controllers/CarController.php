@@ -103,7 +103,7 @@ class CarController extends Controller
         $car->incrementViews();
 
         // Get related cars
-        $relatedCars = Car::with(['images'])
+        $relatedCars = Car::with(['images', 'attributeValues.attribute'])
             ->published()
             ->available()
             ->where('id', '!=', $car->id)

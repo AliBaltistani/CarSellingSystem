@@ -76,6 +76,23 @@
             </div>
         </div>
 
+        <!-- Dynamic Attributes -->
+        @php
+            $cardAttributes = $car->attributeValues
+                ->filter(fn($av) => $av->value !== null && $av->value !== '' && $av->attribute && $av->attribute->show_in_card && $av->attribute->is_active);
+        @endphp
+        @if($cardAttributes->count() > 0)
+            <div class="flex flex-wrap gap-1.5 pt-3">
+                @foreach($cardAttributes as $av)
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 text-xs font-medium rounded-lg border border-amber-100">
+                        @if($av->attribute->icon)<span class="text-amber-400">{!! $av->attribute->icon !!}</span>@endif
+                        <span class="text-amber-500/70">{{ $av->attribute->name }}:</span>
+                        <span>{{ $av->attribute->formatValue($av->typed_value) }}</span>
+                    </span>
+                @endforeach
+            </div>
+        @endif
+
         <!-- Footer -->
         <div class="flex justify-between items-center mt-4">
             <div class="flex items-center text-sm text-slate-500">

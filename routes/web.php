@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\AttributeController as AdminAttributeController;
 use App\Http\Controllers\Admin\DropdownOptionController as AdminDropdownOptionController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\CarListingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -243,6 +244,9 @@ Route::prefix('api')->group(function () {
     
     // Car search suggestions
     Route::get('/cars/suggestions', [SearchController::class, 'suggestions'])->name('api.cars.suggestions');
+
+    // Car listing API (SPA)
+    Route::get('/cars/listing', [CarListingController::class, 'index'])->name('api.cars.listing');
     
     // Category attributes for dynamic forms
     Route::get('/categories/{category}/attributes', [\App\Http\Controllers\Api\CategoryAttributeController::class, 'index'])
