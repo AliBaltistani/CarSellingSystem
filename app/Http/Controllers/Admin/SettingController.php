@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 
 class SettingController extends Controller
 {
@@ -54,6 +55,31 @@ class SettingController extends Controller
         Setting::clearCache();
 
         return back()->with('success', 'Settings updated successfully!');
+    }
+
+    public function testEmail(Request $request)
+    {
+        $request->validate([
+            'test_email' => 'required|email|max:255',
+        ]);
+
+        $adminEmail = $request->test_email;
+
+        try {
+            $siteName = Setting::get('site_name') ?? config('app.name', 'Xenon Motors');
+
+            Mail::raw(
+                "This is a test email from {$siteName}.\n\nIf you're reading this, your SMTP settings are configured correctly!\n\nSent at: " . now()->format('M d, Y h:i A'),
+                function ($message) use ($adminEmail, $siteName) {
+                    $message->to($adminEmail)
+                            ->subject("✅ Test Email from {$siteName}");
+                }
+            );
+
+            return response()->json(['success' => true, 'message' => "Test email sent successfully to {$adminEmail}!"]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 422);
+        }
     }
 
     public function create()

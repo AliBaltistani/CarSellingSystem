@@ -161,6 +161,8 @@ Route::prefix('admin')
         Route::post('settings', [AdminSettingController::class, 'store'])->name('settings.store');
         Route::delete('settings/{setting}', [AdminSettingController::class, 'destroy'])
             ->name('settings.destroy');
+        Route::post('settings/test-email', [AdminSettingController::class, 'testEmail'])
+            ->name('settings.test-email');
 
         // Locations Management
         Route::get('locations/search-api', [AdminLocationController::class, 'searchApi'])
@@ -222,6 +224,18 @@ Route::prefix('admin')
         Route::resource('pages', \App\Http\Controllers\Admin\AdminPageController::class)->except('show');
         Route::post('pages/{page}/toggle-active', [\App\Http\Controllers\Admin\AdminPageController::class, 'toggleActive'])
             ->name('pages.toggle-active');
+
+        // Contact Messages Management
+        Route::get('contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])
+            ->name('contact-messages.index');
+        Route::get('contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'show'])
+            ->name('contact-messages.show');
+        Route::patch('contact-messages/{contactMessage}/status', [\App\Http\Controllers\Admin\ContactMessageController::class, 'updateStatus'])
+            ->name('contact-messages.update-status');
+        Route::delete('contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])
+            ->name('contact-messages.destroy');
+        Route::post('contact-messages/{contactMessage}/reply', [\App\Http\Controllers\Admin\ContactMessageController::class, 'reply'])
+            ->name('contact-messages.reply');
 
         // Dropdown Options Management
         Route::resource('dropdown-options', AdminDropdownOptionController::class)->except('show');
