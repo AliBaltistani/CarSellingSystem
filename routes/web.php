@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-cars/{car}/edit', [CarController::class, 'edit'])->name('cars.edit');
     Route::put('/my-cars/{car}', [CarController::class, 'update'])->name('cars.update');
     Route::delete('/my-cars/{car}', [CarController::class, 'destroy'])->name('cars.destroy');
+    Route::post('/my-cars/bulk-delete', [CarController::class, 'bulkDelete'])->name('cars.bulk-delete');
     Route::delete('/my-cars/images/{image}', [CarController::class, 'deleteImage'])->name('cars.delete-image');
     Route::post('/my-cars/images/{image}/primary', [CarController::class, 'setPrimaryImage'])->name('cars.set-primary-image');
     
@@ -135,6 +136,8 @@ Route::prefix('admin')
             ->name('cars.delete-image');
         Route::post('cars/images/{image}/primary', [AdminCarController::class, 'setPrimaryImage'])
             ->name('cars.set-primary-image');
+        Route::post('cars/bulk-delete', [AdminCarController::class, 'bulkDelete'])
+            ->name('cars.bulk-delete');
         
         // Categories Management
         Route::resource('categories', AdminCategoryController::class)->except('show');

@@ -1,5 +1,5 @@
 <x-layouts.public>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="bulkActions()">
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900">My Listings</h1>
@@ -11,10 +11,33 @@
         </div>
 
         @if($cars->count() > 0)
+            <!-- Bulk Action Bar -->
+            <div x-show="selectedIds.length > 0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+                class="sticky top-4 z-30 mb-4 bg-slate-900 text-white rounded-xl shadow-2xl px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-8 h-8 bg-amber-500 text-white text-sm font-bold rounded-full" x-text="selectedIds.length"></span>
+                    <span class="text-sm font-medium">listing(s) selected</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button @click="selectAll = false; selectedIds = []" class="px-4 py-1.5 text-sm font-medium text-slate-300 hover:text-white transition-colors">
+                        Deselect All
+                    </button>
+                    <button @click="bulkDelete()" :disabled="deleting"
+                        class="inline-flex items-center gap-2 px-4 py-1.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                        <svg x-show="!deleting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <svg x-show="deleting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <span x-text="deleting ? 'Deleting...' : 'Delete Selected'"></span>
+                    </button>
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <table class="w-full">
                     <thead class="bg-slate-50 border-b border-slate-100">
                         <tr>
+                            <th class="px-4 py-4 text-left w-12">
+                                <input type="checkbox" x-model="selectAll" @change="toggleAll()" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+                            </th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Car</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Price</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Status</th>
@@ -25,7 +48,11 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($cars as $car)
-                            <tr class="hover:bg-slate-50">
+                            <tr class="hover:bg-slate-50" :class="selectedIds.includes({{ $car->id }}) ? 'bg-amber-50/50' : ''" x-ref="row{{ $car->id }}">
+                                <td class="px-4 py-4">
+                                    <input type="checkbox" value="{{ $car->id }}" x-model.number="selectedIds"
+                                        class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+                                </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
                                         <img src="{{ $car->main_image }}" alt="{{ $car->title }}" class="w-16 h-12 object-cover rounded-lg mr-4">
@@ -80,4 +107,79 @@
             </div>
         @endif
     </div>
+
+    <script>
+        function bulkActions() {
+            return {
+                selectedIds: [],
+                selectAll: false,
+                deleting: false,
+
+                toggleAll() {
+                    if (this.selectAll) {
+                        this.selectedIds = @json($cars->pluck('id')->toArray());
+                    } else {
+                        this.selectedIds = [];
+                    }
+                },
+
+                async bulkDelete() {
+                    if (!confirm(`Are you sure you want to delete ${this.selectedIds.length} listing(s)? This action cannot be undone.`)) return;
+
+                    this.deleting = true;
+                    try {
+                        const response = await fetch('{{ route("cars.bulk-delete") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ ids: this.selectedIds }),
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            this.selectedIds.forEach(id => {
+                                const row = this.$refs['row' + id];
+                                if (row) {
+                                    row.style.transition = 'opacity 0.3s, transform 0.3s';
+                                    row.style.opacity = '0';
+                                    row.style.transform = 'translateX(20px)';
+                                    setTimeout(() => row.remove(), 300);
+                                }
+                            });
+
+                            this.selectedIds = [];
+                            this.selectAll = false;
+
+                            this.showToast(`${data.deleted} listing(s) deleted successfully!`);
+                        } else {
+                            alert('Failed to delete listings. Please try again.');
+                        }
+                    } catch (e) {
+                        console.error('Bulk delete error:', e);
+                        alert('An error occurred. Please try again.');
+                    }
+                    this.deleting = false;
+                },
+
+                showToast(message) {
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed top-4 right-4 z-50 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl shadow-2xl max-w-sm';
+                    toast.style.animation = 'slideIn 0.3s ease-out';
+                    toast.innerHTML = `<div class="flex items-center gap-3"><svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><p class="text-sm font-medium">${message}</p></div>`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 3000);
+                },
+            };
+        }
+
+        const toastStyles = document.createElement('style');
+        toastStyles.textContent = `
+            @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        `;
+        document.head.appendChild(toastStyles);
+    </script>
 </x-layouts.public>

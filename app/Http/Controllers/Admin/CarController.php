@@ -283,6 +283,29 @@ class CarController extends Controller
             ->with('success', 'Car deleted successfully!');
     }
 
+    public function bulkDelete(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        $cars = Car::whereIn('id', $request->ids)->get();
+
+        foreach ($cars as $car) {
+            foreach ($car->images as $image) {
+                Storage::disk('public')->delete($image->path);
+                if ($image->thumbnail_path) {
+                    Storage::disk('public')->delete($image->thumbnail_path);
+                }
+            }
+            $car->delete();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'deleted' => $cars->count()]);
+        }
+
+        return back()->with('success', $cars->count() . ' car(s) deleted successfully!');
+    }
+
     public function toggleFeatured(Car $car)
     {
         $car->update(['is_featured' => !$car->is_featured]);

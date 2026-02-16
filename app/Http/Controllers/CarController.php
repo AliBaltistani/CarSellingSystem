@@ -320,6 +320,28 @@ class CarController extends Controller
             ->with('success', 'Your car listing has been deleted!');
     }
 
+    public function bulkDelete(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        $cars = Car::whereIn('id', $request->ids)
+            ->where('user_id', auth()->id())
+            ->get();
+
+        foreach ($cars as $car) {
+            foreach ($car->images as $image) {
+                Storage::disk('public')->delete($image->path);
+            }
+            $car->delete();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'deleted' => $cars->count()]);
+        }
+
+        return back()->with('success', $cars->count() . ' listing(s) deleted successfully!');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Image Management
