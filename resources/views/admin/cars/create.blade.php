@@ -334,13 +334,23 @@
                         </label>
                     </div>
 
-                    <div x-show="imagePreviews.length > 0" class="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <template x-for="(src, index) in imagePreviews" :key="index">
-                            <div class="relative group">
-                                <img :src="src" class="w-full h-24 object-cover rounded-lg border border-slate-200">
-                                <span class="absolute top-1 right-1 px-2 py-0.5 bg-emerald-500 text-white text-xs rounded">New</span>
-                            </div>
-                        </template>
+                    <div x-show="imagePreviews.length > 0" class="mt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-slate-700" x-text="imagePreviews.length + ' image(s) selected'"></span>
+                            <button type="button" @click="clearAllImages()" class="text-xs text-red-500 hover:text-red-700">Clear all</button>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <template x-for="(src, index) in imagePreviews" :key="index">
+                                <div class="relative group rounded-lg overflow-hidden border border-slate-200">
+                                    <img :src="src" class="w-full h-24 object-cover">
+                                    <span class="absolute top-1 left-1 px-2 py-0.5 bg-slate-800/70 text-white text-xs rounded" x-text="'#' + (index + 1)"></span>
+                                    <button type="button" @click="removePreview(index)"
+                                        class="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" title="Remove">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -549,6 +559,7 @@
                 currentStep: 1,
                 totalSteps: 6,
                 imagePreviews: [],
+                selectedFiles: [],
                 validationErrors: [],
                 steps: [
                     { number: 1, shortTitle: 'Basic Info', title: 'Basic Information', heading: 'Car Details', description: 'Enter the basic details like make, model, year, and price' },
@@ -643,23 +654,45 @@
 
                 previewImages(event) {
                     this.imagePreviews = [];
+                    this.selectedFiles = [];
                     const files = event.target.files;
                     const maxSize = 2 * 1024 * 1024; // 2MB
 
                     for (let i = 0; i < files.length; i++) {
                         if (files[i].size > maxSize) {
                             alert(`File "${files[i].name}" is too large. Maximum size is 2MB per image.`);
-                            event.target.value = ''; // Clear input
+                            event.target.value = '';
                             this.imagePreviews = [];
+                            this.selectedFiles = [];
                             return;
                         }
                     }
 
                     for (let i = 0; i < files.length; i++) {
+                        this.selectedFiles.push(files[i]);
                         const reader = new FileReader();
                         reader.onload = (e) => { this.imagePreviews.push(e.target.result); };
                         reader.readAsDataURL(files[i]);
                     }
+                },
+
+                removePreview(index) {
+                    this.imagePreviews.splice(index, 1);
+                    this.selectedFiles.splice(index, 1);
+                    this.syncFileInput();
+                },
+
+                clearAllImages() {
+                    this.imagePreviews = [];
+                    this.selectedFiles = [];
+                    this.syncFileInput();
+                },
+
+                syncFileInput() {
+                    const input = document.getElementById('admin-images');
+                    const dt = new DataTransfer();
+                    this.selectedFiles.forEach(f => dt.items.add(f));
+                    input.files = dt.files;
                 }
             }
         }

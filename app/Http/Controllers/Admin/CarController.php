@@ -307,6 +307,9 @@ class CarController extends Controller
         }
         $image->delete();
 
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted']);
+        }
         return back()->with('success', 'Image deleted successfully!');
     }
 
@@ -318,6 +321,9 @@ class CarController extends Controller
         // Set this image as primary
         $image->update(['is_primary' => true]);
 
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Primary image updated']);
+        }
         return back()->with('success', 'Primary image updated!');
     }
 }

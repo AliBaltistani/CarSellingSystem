@@ -322,6 +322,35 @@ class CarController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | Image Management
+    |--------------------------------------------------------------------------
+    */
+
+    public function deleteImage(CarImage $image)
+    {
+        $this->authorizeCarOwner($image->car);
+
+        Storage::disk('public')->delete($image->path);
+        if ($image->thumbnail_path) {
+            Storage::disk('public')->delete($image->thumbnail_path);
+        }
+        $image->delete();
+
+        return response()->json(['success' => true, 'message' => 'Image deleted']);
+    }
+
+    public function setPrimaryImage(CarImage $image)
+    {
+        $this->authorizeCarOwner($image->car);
+
+        CarImage::where('car_id', $image->car_id)->update(['is_primary' => false]);
+        $image->update(['is_primary' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Primary image updated']);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Helper Methods
     |--------------------------------------------------------------------------
     */

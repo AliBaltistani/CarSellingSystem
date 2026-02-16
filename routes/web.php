@@ -99,6 +99,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-cars/{car}/edit', [CarController::class, 'edit'])->name('cars.edit');
     Route::put('/my-cars/{car}', [CarController::class, 'update'])->name('cars.update');
     Route::delete('/my-cars/{car}', [CarController::class, 'destroy'])->name('cars.destroy');
+    Route::delete('/my-cars/images/{image}', [CarController::class, 'deleteImage'])->name('cars.delete-image');
+    Route::post('/my-cars/images/{image}/primary', [CarController::class, 'setPrimaryImage'])->name('cars.set-primary-image');
     
     // User Inquiries
     Route::get('/my-inquiries', [InquiryController::class, 'myInquiries'])->name('inquiries.my-inquiries');
